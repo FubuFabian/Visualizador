@@ -17,11 +17,35 @@ MainWindow::MainWindow(QWidget *parent) :
 
 	volWidget = new QVTKWidget;
 
-	QVBoxLayout *layout = new QVBoxLayout;
-	layout->setContentsMargins(0, 0, 0, 0);
-	layout->setSpacing(0);
-	layout->QLayout::addWidget(volWidget);
-	ui->volView->setLayout(layout);
+	QVBoxLayout *volLayout = new QVBoxLayout;
+	volLayout->setContentsMargins(0, 0, 0, 0);
+	volLayout->setSpacing(0);
+	volLayout->QLayout::addWidget(volWidget);
+	ui->volView->setLayout(volLayout);
+
+	sagitalWidget = new QVTKWidget;
+
+	QVBoxLayout *sagitalLayout = new QVBoxLayout;
+	sagitalLayout->setContentsMargins(0, 0, 0, 0);
+	sagitalLayout->setSpacing(0);
+	sagitalLayout->QLayout::addWidget(sagitalWidget);
+	ui->sagitalView->setLayout(sagitalLayout);
+
+	axialWidget = new QVTKWidget;
+
+	QVBoxLayout *axialLayout = new QVBoxLayout;
+	axialLayout->setContentsMargins(0, 0, 0, 0);
+	axialLayout->setSpacing(0);
+	axialLayout->QLayout::addWidget(axialWidget);
+	ui->axialView->setLayout(axialLayout);
+
+	coronalWidget = new QVTKWidget;
+
+	QVBoxLayout *coronalLayout = new QVBoxLayout;
+	coronalLayout->setContentsMargins(0, 0, 0, 0);
+	coronalLayout->setSpacing(0);
+	coronalLayout->QLayout::addWidget(coronalWidget);
+	ui->coronalView->setLayout(coronalLayout);
 }
 
 MainWindow::~MainWindow()
@@ -42,6 +66,12 @@ void MainWindow::openMHD()
     reader->Update();
 
     volumeData = reader->GetOutput();
+
+	this->displayVol(volumeData);
+}
+
+void MainWindow::displayVol(vtkSmartPointer<vtkImageData>)
+{
 
 	volumeProperty = vtkSmartPointer<vtkVolumeProperty>::New();
 
@@ -96,5 +126,4 @@ void MainWindow::openMHD()
     std::cout<<std::endl;
     std::cout<<"Displaying volume"<<std::endl<<std::endl;
     renwin->Render();
-
 }

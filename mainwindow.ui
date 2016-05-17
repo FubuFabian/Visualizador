@@ -24,7 +24,7 @@
        <widget class="QWidget" name="sagitalView" native="true"/>
       </item>
       <item row="1" column="0">
-       <widget class="QWidget" name="coronaView" native="true"/>
+       <widget class="QWidget" name="coronalView" native="true"/>
       </item>
       <item row="1" column="1">
        <widget class="QWidget" name="volView" native="true"/>
@@ -168,7 +168,7 @@
      <x>0</x>
      <y>0</y>
      <width>1047</width>
-     <height>26</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuOpen">

@@ -30,11 +30,19 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
+
+	void displayVol(vtkSmartPointer<vtkImageData>);
     
 private:
     Ui::MainWindow *ui;
 
-		QVTKWidget *volWidget;
+	QVTKWidget *volWidget;
+
+	QVTKWidget *sagitalWidget;
+
+	QVTKWidget *axialWidget;
+
+	QVTKWidget *coronalWidget;
 
 	/** \brief The filename of the selected volume */
 	QString volumeFilename;
