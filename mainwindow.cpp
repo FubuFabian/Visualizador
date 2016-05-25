@@ -8,6 +8,9 @@
 #include <vtkVolumeRayCastCompositeFunction.h>
 #include <vtkColorTransferFunction.h>
 #include <vtkCamera.h>
+#include <vtkImageChangeInformation.h>
+vtkSmartPointer<vtkImageChangeInformation> changeFilter =
+    vtkSmartPointer<vtkImageChangeInformation>::New();
 
 
 #include <vnl/vnl_matrix.h>
@@ -152,7 +155,6 @@ void MainWindow::setRenderingData()
 
 void MainWindow::setSlicesData()
 {
-
 	ui->rotXSld->setRange(-90,90);
 	ui->rotXSld->setTickInterval(1);
 	ui->rotXSld->setValue(0);
@@ -161,7 +163,6 @@ void MainWindow::setSlicesData()
 	volumeData->GetOrigin(origin);
     volumeData->GetDimensions(dimensions);
 
-
 	centerSlice[0] = floor(dimensions[0]*0.5);
 	centerSlice[1] = floor(dimensions[1]*0.5);
 	centerSlice[2] = floor(dimensions[2]*0.5);
@@ -169,26 +170,22 @@ void MainWindow::setSlicesData()
 	std::cout<<"Displaying Sagittal View"<<std::endl;
 	
 	sliceSagital = centerSlice[0];
-	positionSagital[0] = origin[0] + spacing[0] * sliceSagital;
-	positionSagital[1] = origin[1]; //+ spacing[1] * 0.5 * (dimensions[1]);
-    positionSagital[2] = origin[2]; //+ spacing[2] * 0.5 * (dimensions[2]);
-	transformSagital->Translate(positionSagital[0],positionSagital[1],positionSagital[2]);
 
-	
+	positionCenter[0] = origin[0] + spacing[0] * centerSlice[0];
+	positionCenter[1] = origin[1] + spacing[1] * centerSlice[1]; //+ spacing[1] * 0.5 * (dimensions[1]);
+    positionCenter[2] = origin[2] + spacing[2] * centerSlice[2]; //+ spacing[2] * 0.5 * (dimensions[2]);
+
+	positionSagital[0] = origin[0] + spacing[0] * centerSlice[0];
+	positionSagital[1] = origin[1]; //+ spacing[1] * 0.5 * (dimensions[1]);
+    positionSagital[2] = origin[2]; //+ spacing[2] * 0.5 * (dimensions[2]);	
 
 	resliceAxesSagital->DeepCopy(sagitalElements);
-	/*resliceAxesSagital->SetElement(0, 3, positionSagital[0]);
-	resliceAxesSagital->SetElement(1, 3, positionSagital[1]);
-	resliceAxesSagital->SetElement(2, 3, positionSagital[2]);*/
 
 	reslicerSagital->SetInput(volumeData);
 	reslicerSagital->SetOutputDimensionality(2);
 	reslicerSagital->SetResliceAxes(resliceAxesSagital);
+	reslicerSagital->SetResliceAxesOrigin(positionCenter);
 	reslicerSagital->SetInterpolationModeToLinear();
-	/*reslicerSagital->SetOutputSpacing(spacing);
-	reslicerSagital->SetOutputOrigin(origin);
-	reslicerSagital->SetOutputExtent(volumeData->GetExtent());*/
- 
 
 	if(ui->sagitalViewBtn->isChecked()){
 		ui->sliceSld->setRange(0,dimensions[0]-1);
@@ -200,7 +197,6 @@ void MainWindow::setSlicesData()
 
 void MainWindow::displaySagital()
 {
-  
 	reslicerSagital->SetResliceTransform(transformSagital);
 	reslicerSagital->Update();
 	sliceImageSagital = reslicerSagital->GetOutput();

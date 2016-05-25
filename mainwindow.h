@@ -142,9 +142,14 @@ private:
 	vtkSmartPointer<vtkImageData> sliceImageSagital;
 
 	/**
-	 Psoition of sliced sagital image
+	 Position of sliced sagital image
 	**/
 	double positionSagital[3];
+
+	/**
+	 Position of center
+	**/
+	double positionCenter[3];
 	
 	/**
 	ImageActor of the sliced sagital image
