@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1047</width>
-    <height>732</height>
+    <width>597</width>
+    <height>376</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -78,6 +78,12 @@
           </property>
           <property name="text">
            <string>A</string>
+          </property>
+          <property name="checkable">
+           <bool>true</bool>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
           </property>
          </widget>
         </item>
@@ -167,7 +173,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1047</width>
+     <width>597</width>
      <height>21</height>
     </rect>
    </property>
@@ -213,8 +219,42 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>sliceSld</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>reslice(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>559</x>
+     <y>337</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>570</x>
+     <y>355</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>rotXSld</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>rotateX(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>60</x>
+     <y>325</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>97</x>
+     <y>351</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>openMHD()</slot>
+  <slot>reslice(int)</slot>
+  <slot>rotateX(int)</slot>
  </slots>
 </ui>

@@ -9,6 +9,30 @@
 #include <vtkColorTransferFunction.h>
 #include <vtkCamera.h>
 
+
+#include <vnl/vnl_matrix.h>
+
+const double MainWindow::axialElements[16] = {    
+1, 0, 0, 0,
+0, 1, 0, 0,
+0, 0, 1, 0,
+0, 0, 0, 1       
+};
+
+const double MainWindow::sagitalElements[16] = {  
+0, 0, 1, 0,
+1, 0, 0, 0,
+0, 1, 0, 0,
+0, 0, 0, 1               
+};
+
+const double MainWindow::coronalElements[16] = { 
+1, 0, 0, 0,
+0, 0, 1, 0,
+0, 1, 0, 0,
+0, 0, 0, 1        
+};
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -46,6 +70,10 @@ MainWindow::MainWindow(QWidget *parent) :
 	coronalLayout->setSpacing(0);
 	coronalLayout->QLayout::addWidget(coronalWidget);
 	ui->coronalView->setLayout(coronalLayout);
+
+	resliceAxesSagital = vtkSmartPointer<vtkMatrix4x4>::New();
+	reslicerSagital = vtkSmartPointer<vtkImageReslice>::New();
+	transformSagital = vtkSmartPointer<vtkTransform>::New();
 }
 
 MainWindow::~MainWindow()
@@ -53,26 +81,8 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::openMHD()
+void MainWindow::displayVol()
 {
-
-	std::cout<<"Loading Volume"<<std::endl;
-
-    this->volumeFilename = QFileDialog::getOpenFileName(this, tr("Open Volume .mhd"),
-        QDir::currentPath(), tr("Volume Files (*.mhd)"));
-    
-	vtkSmartPointer<vtkMetaImageReader> reader = vtkSmartPointer<vtkMetaImageReader>::New();
-    reader->SetFileName(volumeFilename.toAscii().data());
-    reader->Update();
-
-    volumeData = reader->GetOutput();
-
-	this->displayVol(volumeData);
-}
-
-void MainWindow::displayVol(vtkSmartPointer<vtkImageData>)
-{
-
 	volumeProperty = vtkSmartPointer<vtkVolumeProperty>::New();
 
     vtkSmartPointer<vtkVolumeRayCastCompositeFunction> rayCastFunction =
@@ -126,4 +136,119 @@ void MainWindow::displayVol(vtkSmartPointer<vtkImageData>)
     std::cout<<std::endl;
     std::cout<<"Displaying volume"<<std::endl<<std::endl;
     renwin->Render();
+}
+
+void MainWindow::setRenderingData()
+{
+	viewerSagital = vtkSmartPointer<vtkImageViewer2>::New();
+	imageActorSagital = vtkSmartPointer<vtkImageActor>::New();
+	imageStyle = vtkSmartPointer<vtkInteractorStyleImage>::New();
+	
+    sagitalWidget->SetRenderWindow(viewerSagital->GetRenderWindow());
+	imageActorSagital = viewerSagital->GetImageActor();
+	imageActorSagital->InterpolateOff();
+	viewerSagital->GetRenderWindow()->GetInteractor()->SetInteractorStyle(imageStyle);
+}
+
+void MainWindow::setSlicesData()
+{
+
+	ui->rotXSld->setRange(-90,90);
+	ui->rotXSld->setTickInterval(1);
+	ui->rotXSld->setValue(0);
+
+	volumeData->GetSpacing(spacing);
+	volumeData->GetOrigin(origin);
+    volumeData->GetDimensions(dimensions);
+
+
+	centerSlice[0] = floor(dimensions[0]*0.5);
+	centerSlice[1] = floor(dimensions[1]*0.5);
+	centerSlice[2] = floor(dimensions[2]*0.5);
+
+	std::cout<<"Displaying Sagittal View"<<std::endl;
+	
+	sliceSagital = centerSlice[0];
+	positionSagital[0] = origin[0] + spacing[0] * sliceSagital;
+	positionSagital[1] = origin[1]; //+ spacing[1] * 0.5 * (dimensions[1]);
+    positionSagital[2] = origin[2]; //+ spacing[2] * 0.5 * (dimensions[2]);
+	transformSagital->Translate(positionSagital[0],positionSagital[1],positionSagital[2]);
+
+	
+
+	resliceAxesSagital->DeepCopy(sagitalElements);
+	/*resliceAxesSagital->SetElement(0, 3, positionSagital[0]);
+	resliceAxesSagital->SetElement(1, 3, positionSagital[1]);
+	resliceAxesSagital->SetElement(2, 3, positionSagital[2]);*/
+
+	reslicerSagital->SetInput(volumeData);
+	reslicerSagital->SetOutputDimensionality(2);
+	reslicerSagital->SetResliceAxes(resliceAxesSagital);
+	reslicerSagital->SetInterpolationModeToLinear();
+	/*reslicerSagital->SetOutputSpacing(spacing);
+	reslicerSagital->SetOutputOrigin(origin);
+	reslicerSagital->SetOutputExtent(volumeData->GetExtent());*/
+ 
+
+	if(ui->sagitalViewBtn->isChecked()){
+		ui->sliceSld->setRange(0,dimensions[0]-1);
+		ui->sliceSld->setTickInterval(1);
+		ui->sliceSld->setValue(centerSlice[0]);
+	}
+
+}
+
+void MainWindow::displaySagital()
+{
+  
+	reslicerSagital->SetResliceTransform(transformSagital);
+	reslicerSagital->Update();
+	sliceImageSagital = reslicerSagital->GetOutput();
+
+	viewerSagital->SetInput(sliceImageSagital);
+    viewerSagital->Render();
+}
+
+void MainWindow::openMHD()
+{
+	std::cout<<"Loading Volume"<<std::endl;
+
+    this->volumeFilename = QFileDialog::getOpenFileName(this, tr("Open Volume .mhd"),
+        QDir::currentPath(), tr("Volume Files (*.mhd)"));
+    
+	vtkSmartPointer<vtkMetaImageReader> reader = vtkSmartPointer<vtkMetaImageReader>::New();
+    reader->SetFileName(volumeFilename.toAscii().data());
+    reader->Update();
+
+    volumeData = reader->GetOutput();
+
+	displayVol();
+	setRenderingData();
+	setSlicesData();
+}
+
+void MainWindow::reslice(int slice)
+{
+	if(ui->sagitalViewBtn->isChecked()){
+
+		positionSagital[0] = origin[0] + spacing[0] * slice;
+		double translate = slice - sliceSagital;
+		transformSagital->Translate(translate*spacing[0],0,0);
+		sliceSagital = slice;
+		displaySagital();
+
+	}
+}
+
+void MainWindow::rotateX(int angle)
+{
+	if(ui->sagitalViewBtn->isChecked()){
+
+		double rotate = angle - angleXSagital;
+		transformSagital->RotateX(rotate);
+		angleXSagital = angle;
+		displaySagital();
+
+	}
+
 }
