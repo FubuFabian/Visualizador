@@ -9,8 +9,6 @@
 #include <vtkColorTransferFunction.h>
 #include <vtkCamera.h>
 #include <vtkImageChangeInformation.h>
-vtkSmartPointer<vtkImageChangeInformation> changeFilter =
-    vtkSmartPointer<vtkImageChangeInformation>::New();
 
 
 #include <vnl/vnl_matrix.h>
@@ -159,25 +157,23 @@ void MainWindow::setSlicesData()
 	ui->rotXSld->setTickInterval(1);
 	ui->rotXSld->setValue(0);
 
+
 	volumeData->GetSpacing(spacing);
 	volumeData->GetOrigin(origin);
     volumeData->GetDimensions(dimensions);
 
-	centerSlice[0] = floor(dimensions[0]*0.5);
-	centerSlice[1] = floor(dimensions[1]*0.5);
-	centerSlice[2] = floor(dimensions[2]*0.5);
+	centerSlice[0] = floor(dimensions[0]*0.5)-1;
+	centerSlice[1] = floor(dimensions[1]*0.5)-1;
+	centerSlice[2] = floor(dimensions[2]*0.5)-1;
 
 	std::cout<<"Displaying Sagittal View"<<std::endl;
 	
 	sliceSagital = centerSlice[0];
+	angleXSagital = 0;
 
 	positionCenter[0] = origin[0] + spacing[0] * centerSlice[0];
-	positionCenter[1] = origin[1] + spacing[1] * centerSlice[1]; //+ spacing[1] * 0.5 * (dimensions[1]);
-    positionCenter[2] = origin[2] + spacing[2] * centerSlice[2]; //+ spacing[2] * 0.5 * (dimensions[2]);
-
-	positionSagital[0] = origin[0] + spacing[0] * centerSlice[0];
-	positionSagital[1] = origin[1]; //+ spacing[1] * 0.5 * (dimensions[1]);
-    positionSagital[2] = origin[2]; //+ spacing[2] * 0.5 * (dimensions[2]);	
+	positionCenter[1] = origin[1] + spacing[1] * centerSlice[1]; 
+    positionCenter[2] = origin[2] + spacing[2] * centerSlice[2]; 
 
 	resliceAxesSagital->DeepCopy(sagitalElements);
 
@@ -186,6 +182,11 @@ void MainWindow::setSlicesData()
 	reslicerSagital->SetResliceAxes(resliceAxesSagital);
 	reslicerSagital->SetResliceAxesOrigin(positionCenter);
 	reslicerSagital->SetInterpolationModeToLinear();
+	reslicerSagital->SetOutputExtent(0,dimensions[0],0,dimensions[2],0,0);
+	//reslicerSagital->SetOutputOrigin(-positionCenter[0],-positionCenter[2],0);
+	reslicerSagital->SetOutputSpacing(spacing);
+
+	transformSagital->PostMultiply();
 
 	if(ui->sagitalViewBtn->isChecked()){
 		ui->sliceSld->setRange(0,dimensions[0]-1);
@@ -226,22 +227,20 @@ void MainWindow::openMHD()
 void MainWindow::reslice(int slice)
 {
 	if(ui->sagitalViewBtn->isChecked()){
-
-		positionSagital[0] = origin[0] + spacing[0] * slice;
 		double translate = slice - sliceSagital;
 		transformSagital->Translate(translate*spacing[0],0,0);
 		sliceSagital = slice;
 		displaySagital();
-
 	}
 }
 
 void MainWindow::rotateX(int angle)
 {
 	if(ui->sagitalViewBtn->isChecked()){
-
 		double rotate = angle - angleXSagital;
+		transformSagital->Translate(0,-(positionCenter[1]-origin[1]),-(positionCenter[2]-origin[2]));
 		transformSagital->RotateX(rotate);
+		transformSagital->Translate(0,(positionCenter[1]-origin[1]),(positionCenter[2]-origin[2]));
 		angleXSagital = angle;
 		displaySagital();
 

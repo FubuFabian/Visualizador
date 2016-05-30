@@ -97,7 +97,12 @@ private:
     int dimensions[3];
 
 	/** \brief The center slices in each view */ 
-	int centerSlice[3];
+	double centerSlice[3];
+
+	/**
+	 Position of center
+	**/
+	double positionCenter[3];
 
 	/**
 	Data for the axial plane
@@ -119,6 +124,9 @@ private:
 	**/
 	vtkSmartPointer<vtkMatrix4x4> resliceAxesSagital;
 
+	/**
+	Matrix containing the  translation and rotation of the slice sagital plane
+	**/
 	vtkSmartPointer<vtkTransform> transformSagital;
 
 	/**
@@ -135,28 +143,21 @@ private:
 	 number of sagital slice
 	**/
 	int sliceSagital;
+
+	/**
+	 Angle of X of sagital slice
+	**/
+	int angleXSagital;
 	
 	/**
 	 sliced sagital image
 	**/
 	vtkSmartPointer<vtkImageData> sliceImageSagital;
-
-	/**
-	 Position of sliced sagital image
-	**/
-	double positionSagital[3];
-
-	/**
-	 Position of center
-	**/
-	double positionCenter[3];
 	
 	/**
 	ImageActor of the sliced sagital image
 	**/
 	vtkSmartPointer<vtkImageActor> imageActorSagital;
-
-	int angleXSagital;
 
 	/**
 	Interactor style of the viewer, it has the basic interaction with a 2D image
