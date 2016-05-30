@@ -98,6 +98,12 @@
           <property name="text">
            <string>B</string>
           </property>
+          <property name="checkable">
+           <bool>true</bool>
+          </property>
+          <property name="checked">
+           <bool>false</bool>
+          </property>
          </widget>
         </item>
         <item row="1" column="0">
@@ -174,7 +180,7 @@
      <x>0</x>
      <y>0</y>
      <width>597</width>
-     <height>21</height>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuOpen">
@@ -226,8 +232,8 @@
    <slot>reslice(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>559</x>
-     <y>337</y>
+     <x>584</x>
+     <y>334</y>
     </hint>
     <hint type="destinationlabel">
      <x>570</x>
@@ -251,10 +257,78 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>rotYSld</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>rotateY(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>277</x>
+     <y>325</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>299</x>
+     <y>345</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>rotZSld</sender>
+   <signal>valueChanged(int)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>rotateZ(int)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>424</x>
+     <y>331</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>463</x>
+     <y>344</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>sagitalViewBtn</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>sagitalBtnClicked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>533</x>
+     <y>222</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>544</x>
+     <y>239</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>axialViewBtn</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>axialBtnClicked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>573</x>
+     <y>207</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>590</x>
+     <y>197</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>openMHD()</slot>
   <slot>reslice(int)</slot>
   <slot>rotateX(int)</slot>
+  <slot>rotateY(int)</slot>
+  <slot>rotateZ(int)</slot>
+  <slot>sagitalBtnClicked(bool)</slot>
+  <slot>axialBtnClicked(bool)</slot>
  </slots>
 </ui>
