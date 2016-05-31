@@ -121,11 +121,6 @@ private:
 	double positionCenter[3];
 
 	/**
-	Data for the coronal plane
-	**/
-	static const double coronalElements[16];
-
-	/**
 	Data for the sagittal plane
 	**/
 	static const double sagitalElements[16];
@@ -236,6 +231,62 @@ private:
 	vtkSmartPointer<vtkImageActor> imageActorAxial;
 
 	/**
+	Data for the coronal plane
+	**/
+	static const double coronalElements[16];
+
+	/**
+	Matrix containing the  translation and rotation of the slice coronal plane
+	**/
+	vtkSmartPointer<vtkMatrix4x4> resliceAxesCoronal;
+
+	/**
+	Matrix containing the  translation and rotation of the slice coronal plane
+	**/
+	vtkSmartPointer<vtkTransform> transformCoronal;
+
+	/**
+	Reslicer that slice the volume and gives the sliced coronal image as an output
+	**/
+	vtkSmartPointer<vtkImageReslice> reslicerCoronal;
+
+	/**
+	Image Viewer that render the sliced axial image
+	**/
+	vtkSmartPointer<vtkImageViewer2> viewerCoronal;
+
+	/**
+	number of coronal slice
+	**/
+	int sliceCoronal;
+
+	/**
+	Angle X of coronal slice
+	**/
+	int angleXCoronal;
+
+	/**
+	Angle Y of coronal slice
+	**/
+	int angleYCoronal;
+
+	/**
+	Angle Z of coronal slice
+	**/
+	int angleZCoronal;
+	
+	/**
+	sliced coronal image
+	**/
+	vtkSmartPointer<vtkImageData> sliceImageCoronal;
+	
+	/**
+	ImageActor of the sliced coronal image
+	**/
+	vtkSmartPointer<vtkImageActor> imageActorCoronal;
+
+
+	/**
 	Interactor style of the viewer, it has the basic interaction with a 2D image
 	**/
 	vtkSmartPointer<vtkInteractorStyleImage> imageStyle;
@@ -275,6 +326,15 @@ private:
 	**/
 	void displayAxial();
 
+	/**
+	Configuration of coronal view
+	**/
+	void configCoronalView();
+
+	/**
+	Display the slice coronal image
+	**/
+	void displayCoronal();
 
 private slots:
 
@@ -292,6 +352,16 @@ private slots:
     Select axial view
     **/
 	void axialBtnClicked(bool);
+
+	/**
+    Select coronal view
+    **/
+	void coronalBtnClicked(bool);
+
+	/**
+    Select 3D view
+    **/
+	void volBtnClicked(bool);
 
 	/**
     Set slice in selected view

@@ -152,6 +152,13 @@ void MainWindow::setRenderingData()
 	imageActorAxial = viewerSagital->GetImageActor();
 	imageActorAxial->InterpolateOff();
 	viewerAxial->GetRenderWindow()->GetInteractor()->SetInteractorStyle(imageStyle);
+
+	viewerCoronal = vtkSmartPointer<vtkImageViewer2>::New();
+	imageActorCoronal = vtkSmartPointer<vtkImageActor>::New();
+    coronalWidget->SetRenderWindow(viewerCoronal->GetRenderWindow());
+	imageActorCoronal = viewerSagital->GetImageActor();
+	imageActorCoronal->InterpolateOff();
+	viewerCoronal->GetRenderWindow()->GetInteractor()->SetInteractorStyle(imageStyle);
 }
 
 void MainWindow::setSlicesData()
@@ -171,6 +178,7 @@ void MainWindow::setSlicesData()
 
 	configSagitalView();
 	configAxialView();
+	configCoronalView();
 
 	ui->rotXSld->setRange(-90,90);
 	ui->rotXSld->setTickInterval(1);
@@ -189,6 +197,7 @@ void MainWindow::setSlicesData()
 	ui->sliceSld->setValue(centerSlice[0]);
 
 	displayAxial();
+	displayCoronal();
 }
 
 void MainWindow::configSagitalView()
@@ -237,6 +246,29 @@ void MainWindow::configAxialView()
 	reslicerAxial->SetInterpolationModeToLinear();
 }
 
+void MainWindow::configCoronalView()
+{
+	resliceAxesCoronal = vtkSmartPointer<vtkMatrix4x4>::New();
+	reslicerCoronal = vtkSmartPointer<vtkImageReslice>::New();
+	transformCoronal = vtkSmartPointer<vtkTransform>::New();
+
+	sliceCoronal = centerSlice[1];
+	angleXCoronal = 0;
+	angleYCoronal = 0;
+	angleZCoronal = 0; 
+
+	transformCoronal->PostMultiply();
+	transformCoronal->Translate(origin[0],positionCenter[1],origin[2]);
+
+	resliceAxesCoronal->DeepCopy(coronalElements);
+
+	reslicerCoronal->SetInput(volumeData);
+	reslicerCoronal->SetOutputDimensionality(2);
+	reslicerCoronal->SetResliceAxes(resliceAxesCoronal);
+	reslicerCoronal->SetResliceTransform(transformCoronal);
+	reslicerCoronal->SetInterpolationModeToLinear();
+}
+
 void MainWindow::displaySagital()
 {
 	reslicerSagital->Update();
@@ -255,6 +287,16 @@ void MainWindow::displayAxial()
 
 	viewerAxial->SetInput(sliceImageAxial);
     viewerAxial->Render();
+}
+
+void MainWindow::displayCoronal()
+{
+	reslicerCoronal->Update();
+	sliceImageCoronal = reslicerCoronal->GetOutput();
+	sliceImageCoronal->Update();
+
+	viewerCoronal->SetInput(sliceImageCoronal);
+    viewerCoronal->Render();
 }
 
 void MainWindow::openMHD()
@@ -287,6 +329,11 @@ void MainWindow::reslice(int slice)
 		transformAxial->Translate(0,0,translate*spacing[2]);
 		sliceAxial = slice;
 		displayAxial();
+	}else if(ui->coronalViewBtn->isChecked()){
+		double translate = slice - sliceCoronal;
+		transformCoronal->Translate(0,translate*spacing[1],0);
+		sliceCoronal = slice;
+		displayCoronal();
 	}
 }
 
@@ -294,18 +341,25 @@ void MainWindow::rotateX(int angle)
 {
 	if(ui->sagitalViewBtn->isChecked()){
 		double rotate = angle - angleXSagital;
-		transformSagital->Translate(0,-(positionCenter[1]-origin[1]),-(positionCenter[2]-origin[2]));
+		transformSagital->Translate(-(sliceSagital*spacing[0]),-(positionCenter[1]-origin[1]),-(positionCenter[2]-origin[2]));
 		transformSagital->RotateX(rotate);
-		transformSagital->Translate(0,(positionCenter[1]-origin[1]),(positionCenter[2]-origin[2]));
+		transformSagital->Translate((sliceSagital*spacing[0]),(positionCenter[1]-origin[1]),(positionCenter[2]-origin[2]));
 		angleXSagital = angle;
 		displaySagital();
 	}else if(ui->axialViewBtn->isChecked()){
 		double rotate = angle - angleXAxial;
-		transformAxial->Translate(-(positionCenter[0]-origin[0]),-(positionCenter[1]-origin[1]),0);
+		transformAxial->Translate(-(positionCenter[0]-origin[0]),-(positionCenter[1]-origin[1]),-(sliceAxial*spacing[2]));
 		transformAxial->RotateX(rotate);
-		transformAxial->Translate((positionCenter[0]-origin[0]),(positionCenter[1]-origin[1]),0);
+		transformAxial->Translate((positionCenter[0]-origin[0]),(positionCenter[1]-origin[1]),(sliceAxial*spacing[2]));
 		angleXAxial = angle;
 		displayAxial();
+	}else if(ui->coronalViewBtn->isChecked()){
+		double rotate = angle - angleXCoronal;
+		transformCoronal->Translate(-(positionCenter[0]-origin[0]),-(sliceCoronal*spacing[1]),-(positionCenter[2]-origin[2]));
+		transformCoronal->RotateX(rotate);
+		transformCoronal->Translate((positionCenter[0]-origin[0]),(sliceCoronal*spacing[1]),(positionCenter[2]-origin[2]));
+		angleXCoronal = angle;
+		displayCoronal();
 	}
 
 }
@@ -314,18 +368,25 @@ void MainWindow::rotateY(int angle)
 {
 	if(ui->sagitalViewBtn->isChecked()){
 		double rotate = angle - angleYSagital;
-		transformSagital->Translate(0,-(positionCenter[1]-origin[1]),-(positionCenter[2]-origin[2]));
+		transformSagital->Translate(-(sliceSagital*spacing[0]),-(positionCenter[1]-origin[1]),-(positionCenter[2]-origin[2]));
 		transformSagital->RotateY(rotate);
-		transformSagital->Translate(0,(positionCenter[1]-origin[1]),(positionCenter[2]-origin[2]));
+		transformSagital->Translate((sliceSagital*spacing[0]),(positionCenter[1]-origin[1]),(positionCenter[2]-origin[2]));
 		angleYSagital = angle;
 		displaySagital();
 	}else if(ui->axialViewBtn->isChecked()){
 		double rotate = angle - angleYAxial;
-		transformAxial->Translate(-(positionCenter[0]-origin[0]),-(positionCenter[1]-origin[1]),0);
+		transformAxial->Translate(-(positionCenter[0]-origin[0]),-(positionCenter[1]-origin[1]),-(sliceAxial*spacing[2]));
 		transformAxial->RotateY(rotate);
-		transformAxial->Translate((positionCenter[0]-origin[0]),(positionCenter[1]-origin[1]),0);
+		transformAxial->Translate((positionCenter[0]-origin[0]),(positionCenter[1]-origin[1]),(sliceAxial*spacing[2]));
 		angleYAxial = angle;
 		displayAxial();
+	}else if(ui->coronalViewBtn->isChecked()){
+		double rotate = angle - angleXCoronal;
+		transformCoronal->Translate(-(positionCenter[0]-origin[0]),-(sliceCoronal*spacing[1]),-(positionCenter[2]-origin[2]));
+		transformCoronal->RotateY(rotate);
+		transformCoronal->Translate((positionCenter[0]-origin[0]),(sliceCoronal*spacing[1]),(positionCenter[2]-origin[2]));
+		angleYCoronal = angle;
+		displayCoronal();
 	}
 
 }
@@ -334,55 +395,135 @@ void MainWindow::rotateZ(int angle)
 {
 	if(ui->sagitalViewBtn->isChecked()){
 		double rotate = angle - angleZSagital;
-		transformSagital->Translate(0,-(positionCenter[1]-origin[1]),-(positionCenter[2]-origin[2]));
+		transformSagital->Translate(-(sliceSagital*spacing[0]),-(positionCenter[1]-origin[1]),-(positionCenter[2]-origin[2]));
 		transformSagital->RotateZ(rotate);
-		transformSagital->Translate(0,(positionCenter[1]-origin[1]),(positionCenter[2]-origin[2]));
+		transformSagital->Translate((sliceSagital*spacing[0]),(positionCenter[1]-origin[1]),(positionCenter[2]-origin[2]));
 		angleZSagital = angle;
 		displaySagital();
 	}else if(ui->axialViewBtn->isChecked()){
 		double rotate = angle - angleZAxial;
-		transformAxial->Translate(-(positionCenter[0]-origin[0]),-(positionCenter[1]-origin[1]),0);
+		transformAxial->Translate(-(positionCenter[0]-origin[0]),-(positionCenter[1]-origin[1]),-(sliceAxial*spacing[2]));
 		transformAxial->RotateZ(rotate);
-		transformAxial->Translate((positionCenter[0]-origin[0]),(positionCenter[1]-origin[1]),0);
+		transformAxial->Translate((positionCenter[0]-origin[0]),(positionCenter[1]-origin[1]),(sliceAxial*spacing[2]));
 		angleZAxial = angle;
 		displayAxial();
+	}else if(ui->coronalViewBtn->isChecked()){
+		double rotate = angle - angleXCoronal;
+		transformCoronal->Translate(-(positionCenter[0]-origin[0]),-(sliceCoronal*spacing[1]),-(positionCenter[2]-origin[2]));
+		transformCoronal->RotateZ(rotate);
+		transformCoronal->Translate((positionCenter[0]-origin[0]),(sliceCoronal*spacing[1]),(positionCenter[2]-origin[2]));
+		angleZCoronal = angle;
+		displayCoronal();
 	}
 }
 
 void MainWindow::sagitalBtnClicked(bool value)
-{
-	if(!value){
-		ui->sagitalViewBtn->setChecked(true);
-	}else{
-		ui->sagitalViewBtn->setChecked(true);
-		ui->axialViewBtn->setChecked(false);
-		ui->coronalViewBtn->setChecked(false);
-		ui->volViewBtn->setChecked(false);
+{		
+	ui->sagitalViewBtn->setChecked(true);
 
-		ui->sliceSld->setRange(0,dimensions[0]-1);
-		ui->sliceSld->setValue(sliceSagital);
+	if(value){
+		
+		if(ui->axialViewBtn->isChecked()){
+			ui->axialViewBtn->setChecked(false);
+			if((dimensions[2]-1)>=(dimensions[0]-1)){
+				ui->sliceSld->setValue(sliceSagital);
+				ui->sliceSld->setRange(0,dimensions[0]-1);
+			}else{
+				ui->sliceSld->setRange(0,dimensions[0]-1);
+				ui->sliceSld->setValue(sliceSagital);
+			}
+		}else if(ui->coronalViewBtn->isChecked()){
+			ui->coronalViewBtn->setChecked(false);
+			if((dimensions[1]-1)>=(dimensions[0]-1)){
+				ui->sliceSld->setValue(sliceSagital);
+				ui->sliceSld->setRange(0,dimensions[0]-1);
+			}else{
+				ui->sliceSld->setRange(0,dimensions[0]-1);
+				ui->sliceSld->setValue(sliceSagital);
+			}
+		}
 
 		ui->rotXSld->setValue(angleXSagital);
 		ui->rotYSld->setValue(angleYSagital);
 		ui->rotZSld->setValue(angleZSagital);
+			
 	}
 }
 
 void MainWindow::axialBtnClicked(bool value)
 {
-	if(!value){
-		ui->axialViewBtn->setChecked(true);
-	}else{
-		ui->sagitalViewBtn->setChecked(false);
-		ui->axialViewBtn->setChecked(true);
-		ui->coronalViewBtn->setChecked(false);
-		ui->volViewBtn->setChecked(false);
+	ui->axialViewBtn->setChecked(true);
 
-		ui->sliceSld->setRange(0,dimensions[2]-1);
-		ui->sliceSld->setValue(sliceAxial);
+	if(value){
+		
+		if(ui->sagitalViewBtn->isChecked()){
+			ui->sagitalViewBtn->setChecked(false);
+			if((dimensions[0]-1)>=(dimensions[2]-1)){
+				ui->sliceSld->setValue(sliceAxial);
+				ui->sliceSld->setRange(0,dimensions[2]-1);
+			}else{
+				ui->sliceSld->setRange(0,dimensions[2]-1);
+				ui->sliceSld->setValue(sliceAxial);
+			}
+		}else if(ui->coronalViewBtn->isChecked()){
+			ui->coronalViewBtn->setChecked(false);
+			if((dimensions[1]-1)>=(dimensions[2]-1)){
+				ui->sliceSld->setValue(sliceAxial);
+				ui->sliceSld->setRange(0,dimensions[2]-1);
+			}else{
+				ui->sliceSld->setRange(0,dimensions[2]-1);
+				ui->sliceSld->setValue(sliceAxial);
+			}
+		}
 
 		ui->rotXSld->setValue(angleXAxial);
 		ui->rotYSld->setValue(angleYAxial);
 		ui->rotZSld->setValue(angleZAxial);
+			
+	}
+}
+
+void MainWindow::coronalBtnClicked(bool value)
+{
+	ui->coronalViewBtn->setChecked(true);
+
+	if(value){
+		
+		if(ui->sagitalViewBtn->isChecked()){
+			ui->sagitalViewBtn->setChecked(false);
+			if((dimensions[0]-1)>=(dimensions[1]-1)){
+				ui->sliceSld->setValue(sliceCoronal);
+				ui->sliceSld->setRange(0,dimensions[1]-1);
+			}else{
+				ui->sliceSld->setRange(0,dimensions[1]-1);
+				ui->sliceSld->setValue(sliceCoronal);
+			}
+		}else if(ui->axialViewBtn->isChecked()){
+			ui->axialViewBtn->setChecked(false);
+			if((dimensions[2]-1)>=(dimensions[0]-1)){
+				ui->sliceSld->setValue(sliceCoronal);
+				ui->sliceSld->setRange(0,dimensions[1]-1);
+			}else{
+				ui->sliceSld->setRange(0,dimensions[1]-1);
+				ui->sliceSld->setValue(sliceCoronal);
+			}
+		}
+
+		ui->rotXSld->setValue(angleXCoronal);
+		ui->rotYSld->setValue(angleYCoronal);
+		ui->rotZSld->setValue(angleZCoronal);
+			
+	}
+}
+
+void MainWindow::volBtnClicked(bool value)
+{
+	if(!value){
+		ui->volViewBtn->setChecked(true);
+	}else{
+		ui->sagitalViewBtn->setChecked(false);
+		ui->axialViewBtn->setChecked(false);
+		ui->coronalViewBtn->setChecked(false);
+		ui->volViewBtn->setChecked(true);
 	}
 }
