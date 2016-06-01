@@ -364,6 +364,16 @@ private slots:
 	void volBtnClicked(bool);
 
 	/**
+    Select display all views
+    **/
+	void allBtnClicked(bool);
+
+	/**
+    Select display one view
+    **/
+	void oneBtnClicked(bool);
+
+	/**
     Set slice in selected view
     **/
 	void reslice(int);

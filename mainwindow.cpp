@@ -10,7 +10,6 @@
 #include <vtkCamera.h>
 #include <vtkImageChangeInformation.h>
 
-
 #include <vnl/vnl_matrix.h>
 
 const double MainWindow::axialElements[16] = {    
@@ -163,7 +162,7 @@ void MainWindow::setRenderingData()
 
 void MainWindow::setSlicesData()
 {
-	std::cout<<"Displaying Slices"<<std::cout;
+	std::cout<<"Displaying Slices"<<std::endl;
 	volumeData->GetSpacing(spacing);
 	volumeData->GetOrigin(origin);
     volumeData->GetDimensions(dimensions);
@@ -420,6 +419,14 @@ void MainWindow::rotateZ(int angle)
 void MainWindow::sagitalBtnClicked(bool value)
 {		
 	ui->sagitalViewBtn->setChecked(true);
+	ui->volViewBtn->setChecked(false);
+
+	if(ui->displayOneBtn->isChecked()){
+		sagitalWidget->show();
+		axialWidget->hide();
+		coronalWidget->hide();
+		volWidget->hide();
+	}
 
 	if(value){
 		
@@ -453,6 +460,14 @@ void MainWindow::sagitalBtnClicked(bool value)
 void MainWindow::axialBtnClicked(bool value)
 {
 	ui->axialViewBtn->setChecked(true);
+	ui->volViewBtn->setChecked(false);
+
+	if(ui->displayOneBtn->isChecked()){
+		sagitalWidget->hide();
+		axialWidget->show();
+		coronalWidget->hide();
+		volWidget->hide();
+	}
 
 	if(value){
 		
@@ -486,6 +501,14 @@ void MainWindow::axialBtnClicked(bool value)
 void MainWindow::coronalBtnClicked(bool value)
 {
 	ui->coronalViewBtn->setChecked(true);
+	ui->volViewBtn->setChecked(false);
+
+	if(ui->displayOneBtn->isChecked()){
+		sagitalWidget->hide();
+		axialWidget->hide();
+		coronalWidget->show();
+		volWidget->hide();
+	}
 
 	if(value){
 		
@@ -518,12 +541,61 @@ void MainWindow::coronalBtnClicked(bool value)
 
 void MainWindow::volBtnClicked(bool value)
 {
-	if(!value){
-		ui->volViewBtn->setChecked(true);
-	}else{
+	ui->volViewBtn->setChecked(true);
+
+	if(ui->displayOneBtn->isChecked()){
+		sagitalWidget->hide();
+		axialWidget->hide();
+		coronalWidget->hide();
+		volWidget->show();
+	}
+	
+	if(value){
 		ui->sagitalViewBtn->setChecked(false);
 		ui->axialViewBtn->setChecked(false);
 		ui->coronalViewBtn->setChecked(false);
-		ui->volViewBtn->setChecked(true);
+	}
+}
+
+void MainWindow::allBtnClicked(bool value)
+{
+	ui->displayAllBtn->setChecked(true);
+	ui->displayOneBtn->setChecked(false);
+
+	if(value){
+		sagitalWidget->show();
+		axialWidget->show();
+		coronalWidget->show();
+		volWidget->show();
+	}
+}
+
+void MainWindow::oneBtnClicked(bool value)
+{
+	ui->displayOneBtn->setChecked(true);
+	ui->displayAllBtn->setChecked(false);
+
+	if(value){
+		if(ui->sagitalViewBtn->isChecked()){
+			sagitalWidget->show();
+			axialWidget->hide();
+			coronalWidget->hide();
+			volWidget->hide();
+		}else if(ui->axialViewBtn->isChecked()){
+			sagitalWidget->hide();
+			axialWidget->show();
+			coronalWidget->hide();
+			volWidget->hide();
+		}else if(ui->coronalViewBtn->isChecked()){
+			sagitalWidget->hide();
+			axialWidget->hide();
+			coronalWidget->show();
+			volWidget->hide();
+		}else if(ui->volViewBtn->isChecked()){
+			sagitalWidget->hide();
+			axialWidget->hide();
+			coronalWidget->hide();
+			volWidget->show();
+		}
 	}
 }

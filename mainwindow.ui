@@ -39,7 +39,7 @@
       <item>
        <layout class="QHBoxLayout" name="displayFormat">
         <item>
-         <widget class="QPushButton" name="dislpalyAllBtn">
+         <widget class="QPushButton" name="displayAllBtn">
           <property name="maximumSize">
            <size>
             <width>30</width>
@@ -48,6 +48,12 @@
           </property>
           <property name="text">
            <string>All</string>
+          </property>
+          <property name="checkable">
+           <bool>true</bool>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
           </property>
          </widget>
         </item>
@@ -61,6 +67,9 @@
           </property>
           <property name="text">
            <string>One</string>
+          </property>
+          <property name="checkable">
+           <bool>true</bool>
           </property>
          </widget>
         </item>
@@ -186,7 +195,7 @@
      <x>0</x>
      <y>0</y>
      <width>1087</width>
-     <height>26</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuOpen">
@@ -359,6 +368,38 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>displayAllBtn</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>allBtnClicked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>997</x>
+     <y>171</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1003</x>
+     <y>122</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>displayOneBtn</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>oneBtnClicked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1057</x>
+     <y>180</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1067</x>
+     <y>148</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>openMHD()</slot>
@@ -370,5 +411,7 @@
   <slot>axialBtnClicked(bool)</slot>
   <slot>coronalBtnClicked(bool)</slot>
   <slot>volBtnClicked(bool)</slot>
+  <slot>allBtnClicked(bool)</slot>
+  <slot>oneBtnClicked(bool)</slot>
  </slots>
 </ui>
