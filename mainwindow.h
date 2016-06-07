@@ -23,8 +23,9 @@
 #include <vtkPolyDataMapper.h>
 #include <vtkActor.h>
 #include <vtkLineSource.h>
+#include <vtkPropPicker.h>
 
-
+#include "QVTKImageWidgetCommand.h"
 
 namespace Ui {
 class MainWindow;
@@ -42,6 +43,11 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
+
+	/**
+	Set the new rotation center in the selected view
+	**/
+	void setNewRotationCenter(double,double);
     
 private:
     Ui::MainWindow *ui;
@@ -216,11 +222,25 @@ private:
 	**/
 	vtkSmartPointer<vtkPolyDataMapper> sagitalRefInCoronalViewMapper;
 
+	/**
+	Sagital rotation center reference
+	**/
 	vtkSmartPointer<vtkRegularPolygonSource> sagitalCenterRef;
 
+	/**
+	Sagital rotation center reference Mapper
+	**/
 	vtkSmartPointer<vtkPolyDataMapper> sagitalCenterRefMapper;
 
+	/**
+	Sagital rotation center reference Actor
+	**/
 	vtkSmartPointer<vtkActor> sagitalCenterRefActor;
+
+	/**
+	Rotation center in sagital view
+	**/
+	double rotCenterSagital[2];
 
 	/**
 	Data for the axial plane
@@ -313,6 +333,26 @@ private:
 	vtkSmartPointer<vtkPolyDataMapper> axialRefInCoronalViewMapper;
 
 	/**
+	Axial rotation center reference
+	**/
+	vtkSmartPointer<vtkRegularPolygonSource> axialCenterRef;
+
+	/**
+	Axial rotation center reference Mapper
+	**/
+	vtkSmartPointer<vtkPolyDataMapper> axialCenterRefMapper;
+
+	/**
+	Axial rotation center reference Actor
+	**/
+	vtkSmartPointer<vtkActor> axialCenterRefActor;
+
+	/**
+	Rotation center in axial view
+	**/
+	double rotCenterAxial[2];
+
+	/**
 	Data for the coronal plane
 	**/
 	static const double coronalElements[16];
@@ -403,6 +443,26 @@ private:
 	vtkSmartPointer<vtkPolyDataMapper> coronalRefInAxialViewMapper;
 
 	/**
+	Coronal rotation center reference
+	**/
+	vtkSmartPointer<vtkRegularPolygonSource> coronalCenterRef;
+
+	/**
+	Coronal rotation center reference Mapper
+	**/
+	vtkSmartPointer<vtkPolyDataMapper> coronalCenterRefMapper;
+
+	/**
+	Coronal rotation center reference Actor
+	**/
+	vtkSmartPointer<vtkActor> coronalCenterRefActor;
+
+	/**
+	Rotation center in coronal view
+	**/
+	double rotCenterCoronal[2];
+
+	/**
 	Display the volume in volWidget
 	**/
 	void displayVol();
@@ -478,6 +538,16 @@ private slots:
     Select display all views
     **/
 	void allBtnClicked(bool);
+
+	/**
+    Initialize picker to change rotation center
+    **/
+	void rotCenterBtnClicked(bool);
+
+	/**
+    Initialize tracer for manual segmentation
+    **/
+	void segmentBtnClicked(bool);
 
 	/**
     Select display one view

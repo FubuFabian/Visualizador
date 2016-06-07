@@ -39,32 +39,32 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
+	//initializing volume display widget
 	volWidget = new QVTKWidget;
-
 	QVBoxLayout *volLayout = new QVBoxLayout;
 	volLayout->setContentsMargins(0, 0, 0, 0);
 	volLayout->setSpacing(0);
 	volLayout->QLayout::addWidget(volWidget);
 	ui->volView->setLayout(volLayout);
 
+	//initializing sagital display widget
 	sagitalWidget = new QVTKWidget;
-
 	QVBoxLayout *sagitalLayout = new QVBoxLayout;
 	sagitalLayout->setContentsMargins(0, 0, 0, 0);
 	sagitalLayout->setSpacing(0);
 	sagitalLayout->QLayout::addWidget(sagitalWidget);
 	ui->sagitalView->setLayout(sagitalLayout);
 
+	//initializing axial display widget
 	axialWidget = new QVTKWidget;
-
 	QVBoxLayout *axialLayout = new QVBoxLayout;
 	axialLayout->setContentsMargins(0, 0, 0, 0);
 	axialLayout->setSpacing(0);
 	axialLayout->QLayout::addWidget(axialWidget);
 	ui->axialView->setLayout(axialLayout);
 
+	//initializing coronal display widget
 	coronalWidget = new QVTKWidget;
-
 	QVBoxLayout *coronalLayout = new QVBoxLayout;
 	coronalLayout->setContentsMargins(0, 0, 0, 0);
 	coronalLayout->setSpacing(0);
@@ -77,10 +77,16 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+void MainWindow::setNewRotationCenter(double x, double y)
+{
+	std::cout<<x<<","<<y<<std::endl;
+}
+
 void MainWindow::displayVol()
 {
 	volumeProperty = vtkSmartPointer<vtkVolumeProperty>::New();
 
+	//setting volume rendering methods and properties
     vtkSmartPointer<vtkVolumeRayCastCompositeFunction> rayCastFunction =
                 vtkSmartPointer<vtkVolumeRayCastCompositeFunction>::New();
 
@@ -106,12 +112,14 @@ void MainWindow::displayVol()
     volumeMapper->CroppingOff();
     volumeMapper->SetInput(volumeData);
 
+	//setting volume rendering data
     volume = vtkSmartPointer<vtkVolume>::New();
     volume->SetMapper(volumeMapper);
     volume->SetOrigin(0,0,0);
     volume->SetProperty(volumeProperty);
     volume->Update();
 
+	//setting 3D scene properties
 	renderer = vtkSmartPointer<vtkRenderer>::New();
     renderer->SetBackground(183.0/255.0,197.0/255.0,253.0/255.0);
     renderer->AddVolume(volume);
@@ -125,6 +133,7 @@ void MainWindow::displayVol()
     
     renderer->GetActiveCamera()->SetPosition(cameraPos);
 
+	//displaying volume
     renwin = vtkSmartPointer<vtkRenderWindow>::New();
     renwin->AddRenderer(renderer);
     
@@ -136,6 +145,7 @@ void MainWindow::displayVol()
 
 void MainWindow::setRenderingData()
 {
+	//initializing sagital 2D view
 	imageStyleSagital = vtkSmartPointer<vtkInteractorStyleImage>::New();
 	viewerSagital = vtkSmartPointer<vtkImageViewer2>::New();
 	imageActorSagital = vtkSmartPointer<vtkImageActor>::New();
@@ -144,6 +154,7 @@ void MainWindow::setRenderingData()
 	imageActorSagital->InterpolateOff();
 	viewerSagital->GetRenderWindow()->GetInteractor()->SetInteractorStyle(imageStyleSagital);
 
+	//initializing axial 2D view
 	imageStyleAxial = vtkSmartPointer<vtkInteractorStyleImage>::New();
 	viewerAxial = vtkSmartPointer<vtkImageViewer2>::New();
 	imageActorAxial = vtkSmartPointer<vtkImageActor>::New();
@@ -152,6 +163,7 @@ void MainWindow::setRenderingData()
 	imageActorAxial->InterpolateOff();
 	viewerAxial->GetRenderWindow()->GetInteractor()->SetInteractorStyle(imageStyleAxial);
 
+	//initializing coronal 2D view
 	imageStyleCoronal = vtkSmartPointer<vtkInteractorStyleImage>::New();
 	viewerCoronal = vtkSmartPointer<vtkImageViewer2>::New();
 	imageActorCoronal = vtkSmartPointer<vtkImageActor>::New();
@@ -164,10 +176,13 @@ void MainWindow::setRenderingData()
 void MainWindow::setSlicesData()
 {
 	std::cout<<"Displaying Slices"<<std::endl;
+
+	//getting volume properties
 	volumeData->GetSpacing(spacing);
 	volumeData->GetOrigin(origin);
     volumeData->GetDimensions(dimensions);
 
+	//setting center of volume 
 	centerSlice[0] = floor(dimensions[0]*0.5)-1;
 	centerSlice[1] = floor(dimensions[1]*0.5)-1;
 	centerSlice[2] = floor(dimensions[2]*0.5)-1;
@@ -176,10 +191,12 @@ void MainWindow::setSlicesData()
 	positionCenter[1] = origin[1] + spacing[1] * centerSlice[1]; 
     positionCenter[2] = origin[2] + spacing[2] * centerSlice[2];
 
+	//configureation of 2D views
 	configSagitalView();
 	configAxialView();
 	configCoronalView();
 
+	//setting sagital initial values for sliders
 	ui->rotXSld->setRange(-90,90);
 	ui->rotXSld->setTickInterval(1);
 	ui->rotXSld->setValue(0);
@@ -196,20 +213,23 @@ void MainWindow::setSlicesData()
 	ui->sliceSld->setTickInterval(1);
 	ui->sliceSld->setValue(centerSlice[0]);
 
+	//displaying 2D views
 	displayAxial();
 	displayCoronal();
 }
 
 void MainWindow::configSagitalView()
 {
-	resliceAxesSagital = vtkSmartPointer<vtkMatrix4x4>::New();
-	reslicerSagital = vtkSmartPointer<vtkImageReslice>::New();
-	transformSagital = vtkSmartPointer<vtkTransform>::New();
-
+	//setting initial variable values
 	sliceSagital = centerSlice[0];
 	angleXSagital = 0;
 	angleYSagital = 0;
 	angleZSagital = 0; 
+
+	//initializing slicer data
+	resliceAxesSagital = vtkSmartPointer<vtkMatrix4x4>::New();
+	reslicerSagital = vtkSmartPointer<vtkImageReslice>::New();
+	transformSagital = vtkSmartPointer<vtkTransform>::New();
 
 	transformSagital->PostMultiply();
 	transformSagital->Translate(positionCenter[0],origin[1],origin[2]);
@@ -222,6 +242,7 @@ void MainWindow::configSagitalView()
 	reslicerSagital->SetResliceTransform(transformSagital);
 	reslicerSagital->SetInterpolationModeToLinear();
 	
+	//setting visual references for axial and coronal slices
 	sagitalRefInAxialView = vtkSmartPointer<vtkLineSource>::New();
 	sagitalRefInAxialViewMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
 	sagitalRefInAxialViewActor = vtkSmartPointer<vtkActor>::New();
@@ -255,31 +276,39 @@ void MainWindow::configSagitalView()
 	viewerAxial->GetRenderer()->AddActor(sagitalRefInAxialViewActor);
 	viewerCoronal->GetRenderer()->AddActor(sagitalRefInCoronalViewActor);
 
+	//initializing rotation center
+	rotCenterSagital[0] = positionCenter[1]-origin[1];
+	rotCenterSagital[1] = positionCenter[2]-origin[2];
+
+	//seting visual reference for rotation center
 	sagitalCenterRef = vtkSmartPointer<vtkRegularPolygonSource>::New();
 	sagitalCenterRefMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
 	sagitalCenterRefActor = vtkSmartPointer<vtkActor>::New();
  
 	sagitalCenterRef->SetNumberOfSides(50);
 	sagitalCenterRef->SetRadius(1);
-	sagitalCenterRef->SetCenter(positionCenter[1],positionCenter[2],0);
+	sagitalCenterRef->SetCenter(rotCenterSagital[0],rotCenterSagital[1],0);
 
 	sagitalCenterRefMapper->SetInputConnection(sagitalCenterRef->GetOutputPort());;
 	sagitalCenterRefActor->SetMapper(sagitalCenterRefMapper);
 	sagitalCenterRefActor->GetProperty()->SetColor(1.0,0.59,0.08);
 
 	viewerSagital->GetRenderer()->AddActor(sagitalCenterRefActor);
+
 }
 
 void MainWindow::configAxialView()
 {
-	resliceAxesAxial = vtkSmartPointer<vtkMatrix4x4>::New();
-	reslicerAxial = vtkSmartPointer<vtkImageReslice>::New();
-	transformAxial = vtkSmartPointer<vtkTransform>::New();
-
+	//setting initial variable values
 	sliceAxial = centerSlice[2];
 	angleXAxial = 0;
 	angleYAxial = 0;
 	angleZAxial = 0; 
+
+	//initializing slicer data
+	resliceAxesAxial = vtkSmartPointer<vtkMatrix4x4>::New();
+	reslicerAxial = vtkSmartPointer<vtkImageReslice>::New();
+	transformAxial = vtkSmartPointer<vtkTransform>::New();
 
 	transformAxial->PostMultiply();
 	transformAxial->Translate(origin[0],origin[1],positionCenter[2]);
@@ -292,6 +321,7 @@ void MainWindow::configAxialView()
 	reslicerAxial->SetResliceTransform(transformAxial);
 	reslicerAxial->SetInterpolationModeToLinear();
 
+	//setting visual references for sagital and coronal slices
 	axialRefInSagitalView = vtkSmartPointer<vtkLineSource>::New();
 	axialRefInSagitalViewMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
 	axialRefInSagitalViewActor = vtkSmartPointer<vtkActor>::New();
@@ -323,18 +353,37 @@ void MainWindow::configAxialView()
 	axialRefInCoronalViewActor->GetProperty()->SetColor(237,0,0);
 
 	viewerCoronal->GetRenderer()->AddActor(axialRefInCoronalViewActor);
+
+	//initializing rotation center
+	rotCenterAxial[0] = positionCenter[0]-origin[0];
+	rotCenterAxial[1] = positionCenter[1]-origin[1];
+
+	//seting visual reference for rotation center
+	axialCenterRef = vtkSmartPointer<vtkRegularPolygonSource>::New();
+	axialCenterRefMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+	axialCenterRefActor = vtkSmartPointer<vtkActor>::New();
+ 
+	axialCenterRef->SetNumberOfSides(50);
+	axialCenterRef->SetRadius(1);
+	axialCenterRef->SetCenter(rotCenterAxial[0],rotCenterAxial[1],0);
+
+	axialCenterRefMapper->SetInputConnection(axialCenterRef->GetOutputPort());;
+	axialCenterRefActor->SetMapper(axialCenterRefMapper);
+	axialCenterRefActor->GetProperty()->SetColor(1.0,0.59,0.08);
 }
 
 void MainWindow::configCoronalView()
 {
-	resliceAxesCoronal = vtkSmartPointer<vtkMatrix4x4>::New();
-	reslicerCoronal = vtkSmartPointer<vtkImageReslice>::New();
-	transformCoronal = vtkSmartPointer<vtkTransform>::New();
-
+	//setting initial variable values
 	sliceCoronal = centerSlice[1];
 	angleXCoronal = 0;
 	angleYCoronal = 0;
 	angleZCoronal = 0; 
+
+	//initializing slicer data
+	resliceAxesCoronal = vtkSmartPointer<vtkMatrix4x4>::New();
+	reslicerCoronal = vtkSmartPointer<vtkImageReslice>::New();
+	transformCoronal = vtkSmartPointer<vtkTransform>::New();
 
 	transformCoronal->PostMultiply();
 	transformCoronal->Translate(origin[0],positionCenter[1],origin[2]);
@@ -347,6 +396,7 @@ void MainWindow::configCoronalView()
 	reslicerCoronal->SetResliceTransform(transformCoronal);
 	reslicerCoronal->SetInterpolationModeToLinear();
 
+	//setting visual references for sagital and axial slices
 	coronalRefInSagitalView = vtkSmartPointer<vtkLineSource>::New();
 	coronalRefInSagitalViewMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
 	coronalRefInSagitalViewActor = vtkSmartPointer<vtkActor>::New();
@@ -378,52 +428,72 @@ void MainWindow::configCoronalView()
 	coronalRefInAxialViewActor->GetProperty()->SetColor(237,128,0);
 
 	viewerAxial->GetRenderer()->AddActor(coronalRefInAxialViewActor);
+
+	//initializing rotation center
+	rotCenterCoronal[0] = positionCenter[0]-origin[0];
+	rotCenterCoronal[1] = positionCenter[2]-origin[2];
+
+	//seting visual reference for rotation center
+	coronalCenterRef = vtkSmartPointer<vtkRegularPolygonSource>::New();
+	coronalCenterRefMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+	coronalCenterRefActor = vtkSmartPointer<vtkActor>::New();
+ 
+	coronalCenterRef->SetNumberOfSides(50);
+	coronalCenterRef->SetRadius(1);
+	coronalCenterRef->SetCenter(rotCenterCoronal[0],rotCenterCoronal[1],0);
+
+	coronalCenterRefMapper->SetInputConnection(coronalCenterRef->GetOutputPort());;
+	coronalCenterRefActor->SetMapper(coronalCenterRefMapper);
+	coronalCenterRefActor->GetProperty()->SetColor(1.0,0.59,0.08);
 }
 
 void MainWindow::displaySagital()
 {
+	//updating slice image
 	reslicerSagital->Update();
 	sliceImageSagital = reslicerSagital->GetOutput();
 	sliceImageSagital->Update();
-
-	
-	viewerAxial->Render();
-	viewerCoronal->Render();
-	
 	viewerSagital->SetInput(sliceImageSagital);
     viewerSagital->Render();
+
+	//updating visual references
+	viewerAxial->Render();
+	viewerCoronal->Render();
 }
 
 void MainWindow::displayAxial()
 {
+	//updating slice image
 	reslicerAxial->Update();
 	sliceImageAxial = reslicerAxial->GetOutput();
 	sliceImageAxial->Update();
-
-	viewerSagital->Render();
-	viewerCoronal->Render();
-
 	viewerAxial->SetInput(sliceImageAxial);
     viewerAxial->Render();
+
+	//updating visual references
+	viewerSagital->Render();
+	viewerCoronal->Render();
 }
 
 void MainWindow::displayCoronal()
 {
+	//updating slice image
 	reslicerCoronal->Update();
 	sliceImageCoronal = reslicerCoronal->GetOutput();
 	sliceImageCoronal->Update();
-
-	viewerSagital->Render();
-	viewerAxial->Render();
-
 	viewerCoronal->SetInput(sliceImageCoronal);
     viewerCoronal->Render();
+
+	//updating visual references
+	viewerSagital->Render();
+	viewerAxial->Render();
 }
 
 void MainWindow::openMHD()
 {
 	std::cout<<"Loading Volume"<<std::endl;
 
+	//initializing reader
     this->volumeFilename = QFileDialog::getOpenFileName(this, tr("Open Volume .mhd"),
         QDir::currentPath(), tr("Volume Files (*.mhd)"));
     
@@ -433,6 +503,7 @@ void MainWindow::openMHD()
 
     volumeData = reader->GetOutput();
 
+	//displaying volume
 	displayVol();
 	setRenderingData();
 	setSlicesData();
@@ -442,10 +513,12 @@ void MainWindow::reslice(int slice)
 {
 	if(ui->sagitalViewBtn->isChecked()){
 		
+		//change slice
 		double translate = slice - sliceSagital;
 		transformSagital->Translate(translate*spacing[0],0,0);
 		sliceSagital = slice;
 
+		//change visual reference
 		double p0Axial[3] = {sliceSagital*spacing[0],dimensions[1]*spacing[1],0.0};
 		double p1Axial[3] = {sliceSagital*spacing[0],0.0,0.0};
 	
@@ -462,15 +535,17 @@ void MainWindow::reslice(int slice)
 		sagitalRefInCoronalView->Update();
 		sagitalRefInCoronalViewMapper->Update();
 
+		//displaying new slice
 		displaySagital();
 
 	}else if(ui->axialViewBtn->isChecked()){
 
+		//change slice
 		double translate = slice - sliceAxial;
 		transformAxial->Translate(0,0,translate*spacing[2]);
 		sliceAxial = slice;
-		displayAxial();
 
+		//change visual reference
 		double p0Sagital[3] = {dimensions[1]*spacing[1],sliceAxial*spacing[2],0.0};
 		double p1Sagital[3] = {0.0,sliceAxial*spacing[2],0.0};
 	
@@ -487,12 +562,17 @@ void MainWindow::reslice(int slice)
 		axialRefInCoronalView->Update();
 		axialRefInCoronalViewMapper->Update();
 
+		//displaying new slice
+		displayAxial();
+
 	}else if(ui->coronalViewBtn->isChecked()){
 
+		//change slice
 		double translate = slice - sliceCoronal;
 		transformCoronal->Translate(0,translate*spacing[1],0);
 		sliceCoronal = slice;
 
+		//change visual reference
 		double p0Sagital[3] = {sliceCoronal*spacing[1],dimensions[2]*spacing[2],0.0};
 		double p1Sagital[3] = {sliceCoronal*spacing[1],0.0,0.0};
 	
@@ -509,33 +589,49 @@ void MainWindow::reslice(int slice)
 		coronalRefInAxialView->Update();
 		coronalRefInAxialViewMapper->Update();
 
+		//display new slice
 		displayCoronal();
+
 	}
 }
 
 void MainWindow::rotateX(int angle)
 {
 	if(ui->sagitalViewBtn->isChecked()){
+
+		//rotate slice
 		double rotate = angle - angleXSagital;
-		transformSagital->Translate(-(sliceSagital*spacing[0]),-(positionCenter[1]-origin[1]),-(positionCenter[2]-origin[2]));
+		transformSagital->Translate(-(sliceSagital*spacing[0]),-(rotCenterSagital[0]),-(rotCenterSagital[1]));
 		transformSagital->RotateX(rotate);
-		transformSagital->Translate((sliceSagital*spacing[0]),(positionCenter[1]-origin[1]),(positionCenter[2]-origin[2]));
+		transformSagital->Translate((sliceSagital*spacing[0]),(rotCenterSagital[0]),(rotCenterSagital[1]));
 		angleXSagital = angle;
+
+		//display new slice
 		displaySagital();
+
 	}else if(ui->axialViewBtn->isChecked()){
+
+		//rotate slice
 		double rotate = angle - angleXAxial;
-		transformAxial->Translate(-(positionCenter[0]-origin[0]),-(positionCenter[1]-origin[1]),-(sliceAxial*spacing[2]));
+		transformAxial->Translate(-(rotCenterAxial[0]),-(rotCenterAxial[1]),-(sliceAxial*spacing[2]));
 		transformAxial->RotateX(rotate);
-		transformAxial->Translate((positionCenter[0]-origin[0]),(positionCenter[1]-origin[1]),(sliceAxial*spacing[2]));
+		transformAxial->Translate((rotCenterAxial[0]),(rotCenterAxial[1]),(sliceAxial*spacing[2]));
 		angleXAxial = angle;
+
+		//display new slice
 		displayAxial();
+
 	}else if(ui->coronalViewBtn->isChecked()){
+
 		double rotate = angle - angleXCoronal;
-		transformCoronal->Translate(-(positionCenter[0]-origin[0]),-(sliceCoronal*spacing[1]),-(positionCenter[2]-origin[2]));
+		transformCoronal->Translate(-(rotCenterCoronal[0]),-(sliceCoronal*spacing[1]),-(rotCenterCoronal[1]));
 		transformCoronal->RotateX(rotate);
-		transformCoronal->Translate((positionCenter[0]-origin[0]),(sliceCoronal*spacing[1]),(positionCenter[2]-origin[2]));
+		transformCoronal->Translate((rotCenterCoronal[0]),(sliceCoronal*spacing[1]),(rotCenterCoronal[1]));
 		angleXCoronal = angle;
+
+		//display new slice
 		displayCoronal();
+
 	}
 
 }
@@ -543,26 +639,41 @@ void MainWindow::rotateX(int angle)
 void MainWindow::rotateY(int angle)
 {
 	if(ui->sagitalViewBtn->isChecked()){
+
+		//rotate slice
 		double rotate = angle - angleYSagital;
-		transformSagital->Translate(-(sliceSagital*spacing[0]),-(positionCenter[1]-origin[1]),-(positionCenter[2]-origin[2]));
+		transformSagital->Translate(-(sliceSagital*spacing[0]),-(rotCenterSagital[0]),-(rotCenterSagital[1]));
 		transformSagital->RotateY(rotate);
-		transformSagital->Translate((sliceSagital*spacing[0]),(positionCenter[1]-origin[1]),(positionCenter[2]-origin[2]));
+		transformSagital->Translate((sliceSagital*spacing[0]),(rotCenterSagital[0]),(rotCenterSagital[1]));
 		angleYSagital = angle;
+
+		//display new slice
 		displaySagital();
+
 	}else if(ui->axialViewBtn->isChecked()){
+
+		//rotate slice
 		double rotate = angle - angleYAxial;
-		transformAxial->Translate(-(positionCenter[0]-origin[0]),-(positionCenter[1]-origin[1]),-(sliceAxial*spacing[2]));
+		transformAxial->Translate(-(rotCenterAxial[0]),-(rotCenterAxial[1]),-(sliceAxial*spacing[2]));
 		transformAxial->RotateY(rotate);
-		transformAxial->Translate((positionCenter[0]-origin[0]),(positionCenter[1]-origin[1]),(sliceAxial*spacing[2]));
+		transformAxial->Translate((rotCenterAxial[0]),(rotCenterAxial[1]),(sliceAxial*spacing[2]));
 		angleYAxial = angle;
+
+		//display new slice
 		displayAxial();
+
 	}else if(ui->coronalViewBtn->isChecked()){
+
+		//rotate slice
 		double rotate = angle - angleXCoronal;
-		transformCoronal->Translate(-(positionCenter[0]-origin[0]),-(sliceCoronal*spacing[1]),-(positionCenter[2]-origin[2]));
+		transformCoronal->Translate(-(rotCenterCoronal[0]),-(sliceCoronal*spacing[1]),-(rotCenterCoronal[1]));
 		transformCoronal->RotateY(rotate);
-		transformCoronal->Translate((positionCenter[0]-origin[0]),(sliceCoronal*spacing[1]),(positionCenter[2]-origin[2]));
+		transformCoronal->Translate((rotCenterCoronal[0]),(sliceCoronal*spacing[1]),(rotCenterCoronal[1]));
 		angleYCoronal = angle;
+
+		//display new slice
 		displayCoronal();
+
 	}
 
 }
@@ -570,55 +681,82 @@ void MainWindow::rotateY(int angle)
 void MainWindow::rotateZ(int angle)
 {
 	if(ui->sagitalViewBtn->isChecked()){
+
+		//rotate slice
 		double rotate = angle - angleZSagital;
-		transformSagital->Translate(-(sliceSagital*spacing[0]),-(positionCenter[1]-origin[1]),-(positionCenter[2]-origin[2]));
+		transformSagital->Translate(-(sliceSagital*spacing[0]),-(rotCenterSagital[0]),-(rotCenterSagital[1]));
 		transformSagital->RotateZ(rotate);
-		transformSagital->Translate((sliceSagital*spacing[0]),(positionCenter[1]-origin[1]),(positionCenter[2]-origin[2]));
+		transformSagital->Translate((sliceSagital*spacing[0]),(rotCenterSagital[0]),(rotCenterSagital[1]));
 		angleZSagital = angle;
+
+		//display new slice
 		displaySagital();
+
 	}else if(ui->axialViewBtn->isChecked()){
+
+		//rotate slice
 		double rotate = angle - angleZAxial;
-		transformAxial->Translate(-(positionCenter[0]-origin[0]),-(positionCenter[1]-origin[1]),-(sliceAxial*spacing[2]));
+		transformAxial->Translate(-(rotCenterAxial[0]),-(rotCenterAxial[1]),-(sliceAxial*spacing[2]));
 		transformAxial->RotateZ(rotate);
-		transformAxial->Translate((positionCenter[0]-origin[0]),(positionCenter[1]-origin[1]),(sliceAxial*spacing[2]));
+		transformAxial->Translate((rotCenterAxial[0]),(rotCenterAxial[1]),(sliceAxial*spacing[2]));
 		angleZAxial = angle;
+
+		//display new slice
 		displayAxial();
+
 	}else if(ui->coronalViewBtn->isChecked()){
+
+		//rotate slice
 		double rotate = angle - angleXCoronal;
-		transformCoronal->Translate(-(positionCenter[0]-origin[0]),-(sliceCoronal*spacing[1]),-(positionCenter[2]-origin[2]));
+		transformCoronal->Translate(-(rotCenterCoronal[0]),-(sliceCoronal*spacing[1]),-(rotCenterCoronal[1]));
 		transformCoronal->RotateZ(rotate);
-		transformCoronal->Translate((positionCenter[0]-origin[0]),(sliceCoronal*spacing[1]),(positionCenter[2]-origin[2]));
+		transformCoronal->Translate((rotCenterCoronal[0]),(sliceCoronal*spacing[1]),(rotCenterCoronal[1]));
 		angleZCoronal = angle;
+
+		//display new slice
 		displayCoronal();
+
 	}
 }
 
 void MainWindow::sagitalBtnClicked(bool value)
 {		
+	//check button
 	ui->sagitalViewBtn->setChecked(true);
-	ui->volViewBtn->setChecked(false);
-
-	if(ui->displayOneBtn->isChecked()){
-		sagitalWidget->show();
-		axialWidget->hide();
-		coronalWidget->hide();
-		volWidget->hide();
-	}
 
 	if(value){
 
+		//uncheck buttons
+		ui->rotCenterBtn->setChecked(false);
+
+		//change the view when only one view is active 
+		if(ui->displayOneBtn->isChecked()){
+			sagitalWidget->show();
+			axialWidget->hide();
+			coronalWidget->hide();
+			volWidget->hide();
+		}
+
+		//remove axial and coronal references, and add rotation center ref
 		viewerSagital->GetRenderer()->RemoveActor(axialRefInSagitalViewActor);
 		viewerSagital->GetRenderer()->RemoveActor(coronalRefInSagitalViewActor);
+		viewerSagital->GetRenderer()->AddActor(sagitalCenterRefActor);
 
+		//adding slice reference in other views
 		viewerAxial->GetRenderer()->AddActor(sagitalRefInAxialViewActor);
 		viewerCoronal->GetRenderer()->AddActor(sagitalRefInCoronalViewActor);
+
 		
 		if(ui->axialViewBtn->isChecked()){
 
+			//uncheck button
 			ui->axialViewBtn->setChecked(false);
 
+			//updating refrences
 			viewerAxial->GetRenderer()->AddActor(coronalRefInAxialViewActor);
+			viewerAxial->GetRenderer()->RemoveActor(axialCenterRefActor);
 
+			//change reslice slider to current position
 			if((dimensions[2]-1)>=(dimensions[0]-1)){
 				ui->sliceSld->setValue(sliceSagital);
 				ui->sliceSld->setRange(0,dimensions[0]-1);
@@ -627,12 +765,19 @@ void MainWindow::sagitalBtnClicked(bool value)
 				ui->sliceSld->setValue(sliceSagital);
 			}
 
+			//remove observer
+			imageStyleAxial->RemoveAllObservers();
+
 		}else if(ui->coronalViewBtn->isChecked()){
 
+			//uncheck button
 			ui->coronalViewBtn->setChecked(false);
 
+			//updating refrences
 			viewerCoronal->GetRenderer()->AddActor(axialRefInCoronalViewActor);
+			viewerCoronal->GetRenderer()->RemoveActor(coronalCenterRefActor);
 
+			//change reslice slider to current position
 			if((dimensions[1]-1)>=(dimensions[0]-1)){
 				ui->sliceSld->setValue(sliceSagital);
 				ui->sliceSld->setRange(0,dimensions[0]-1);
@@ -641,8 +786,17 @@ void MainWindow::sagitalBtnClicked(bool value)
 				ui->sliceSld->setValue(sliceSagital);
 			}
 
+			//remove observer
+			imageStyleCoronal->RemoveAllObservers();
+
+		}else if(ui->volViewBtn->isChecked()){
+			
+			//uncheck button
+			ui->volViewBtn->setChecked(false);
+		
 		}
 
+		//change rotation sliders to current position
 		ui->rotXSld->setValue(angleXSagital);
 		ui->rotYSld->setValue(angleYSagital);
 		ui->rotZSld->setValue(angleZSagital);
@@ -652,30 +806,44 @@ void MainWindow::sagitalBtnClicked(bool value)
 
 void MainWindow::axialBtnClicked(bool value)
 {
+	//check button
 	ui->axialViewBtn->setChecked(true);
-	ui->volViewBtn->setChecked(false);
-
-	if(ui->displayOneBtn->isChecked()){
-		sagitalWidget->hide();
-		axialWidget->show();
-		coronalWidget->hide();
-		volWidget->hide();
-	}
 
 	if(value){
 
+		//uncheck buttons
+		ui->rotCenterBtn->setChecked(false);
+
+		//change the view when only one view is active 
+		if(ui->displayOneBtn->isChecked()){
+			sagitalWidget->hide();
+			axialWidget->show();
+			coronalWidget->hide();
+			volWidget->hide();
+		}
+
+		//remove sagital and coronal references, and add rotation center ref
 		viewerAxial->GetRenderer()->RemoveActor(sagitalRefInAxialViewActor);
 		viewerAxial->GetRenderer()->RemoveActor(coronalRefInAxialViewActor);
+		viewerAxial->GetRenderer()->AddActor(axialCenterRefActor);
 
+		//adding slice reference in other views
 		viewerSagital->GetRenderer()->AddActor(axialRefInSagitalViewActor);
 		viewerCoronal->GetRenderer()->AddActor(axialRefInCoronalViewActor);
 
+		//remove observer
+		imageStyleAxial->RemoveAllObservers();
+
 		if(ui->sagitalViewBtn->isChecked()){
 
+			//uncheck button
 			ui->sagitalViewBtn->setChecked(false);
 
+			//updating refrences
 			viewerSagital->GetRenderer()->AddActor(coronalRefInSagitalViewActor);
+			viewerSagital->GetRenderer()->RemoveActor(sagitalCenterRefActor);
 
+			//change reslice slider to current position
 			if((dimensions[0]-1)>=(dimensions[2]-1)){
 				ui->sliceSld->setValue(sliceAxial);
 				ui->sliceSld->setRange(0,dimensions[2]-1);
@@ -684,12 +852,19 @@ void MainWindow::axialBtnClicked(bool value)
 				ui->sliceSld->setValue(sliceAxial);
 			}
 
+			//remove observer
+			imageStyleSagital->RemoveAllObservers();
+
 		}else if(ui->coronalViewBtn->isChecked()){
 
+			//uncheck button
 			ui->coronalViewBtn->setChecked(false);
 
+			//updating refrences
 			viewerCoronal->GetRenderer()->AddActor(sagitalRefInCoronalViewActor);
+			viewerCoronal->GetRenderer()->RemoveActor(coronalCenterRefActor);
 
+			//change reslice slider to current position
 			if((dimensions[1]-1)>=(dimensions[2]-1)){
 				ui->sliceSld->setValue(sliceAxial);
 				ui->sliceSld->setRange(0,dimensions[2]-1);
@@ -698,8 +873,17 @@ void MainWindow::axialBtnClicked(bool value)
 				ui->sliceSld->setValue(sliceAxial);
 			}
 
+			//remove observer
+			imageStyleCoronal->RemoveAllObservers();
+
+		}else if(ui->volViewBtn->isChecked()){
+			
+			//uncheck button
+			ui->volViewBtn->setChecked(false);
+		
 		}
 
+		//change rotation sliders to current position
 		ui->rotXSld->setValue(angleXAxial);
 		ui->rotYSld->setValue(angleYAxial);
 		ui->rotZSld->setValue(angleZAxial);
@@ -709,30 +893,44 @@ void MainWindow::axialBtnClicked(bool value)
 
 void MainWindow::coronalBtnClicked(bool value)
 {
+	//check button
 	ui->coronalViewBtn->setChecked(true);
-	ui->volViewBtn->setChecked(false);
-
-	if(ui->displayOneBtn->isChecked()){
-		sagitalWidget->hide();
-		axialWidget->hide();
-		coronalWidget->show();
-		volWidget->hide();
-	}
 
 	if(value){
-		
+
+		//uncheck buttons
+		ui->rotCenterBtn->setChecked(false);
+
+		//change the view when only one view is active 
+		if(ui->displayOneBtn->isChecked()){
+			sagitalWidget->hide();
+			axialWidget->hide();
+			coronalWidget->show();
+			volWidget->hide();
+		}
+
+		//remove sagital and axial references, and add rotation center ref
 		viewerCoronal->GetRenderer()->RemoveActor(sagitalRefInCoronalViewActor);
 		viewerCoronal->GetRenderer()->RemoveActor(axialRefInCoronalViewActor);
+		viewerCoronal->GetRenderer()->AddActor(coronalCenterRefActor);
 		
+		//adding slice reference in other views
 		viewerSagital->GetRenderer()->AddActor(coronalRefInSagitalViewActor);
 		viewerAxial->GetRenderer()->AddActor(coronalRefInAxialViewActor);
 
+		//remove observer
+		imageStyleCoronal->RemoveAllObservers();
+
 		if(ui->sagitalViewBtn->isChecked()){
 
+			//uncheck button
 			ui->sagitalViewBtn->setChecked(false);
 
+			//updating refrences
 			viewerSagital->GetRenderer()->AddActor(axialRefInSagitalViewActor);
+			viewerSagital->GetRenderer()->RemoveActor(sagitalCenterRefActor);
 
+			//change reslice slider to current position
 			if((dimensions[0]-1)>=(dimensions[1]-1)){
 				ui->sliceSld->setValue(sliceCoronal);
 				ui->sliceSld->setRange(0,dimensions[1]-1);
@@ -741,12 +939,19 @@ void MainWindow::coronalBtnClicked(bool value)
 				ui->sliceSld->setValue(sliceCoronal);
 			}
 
+			//remove observer
+			imageStyleSagital->RemoveAllObservers();
+
 		}else if(ui->axialViewBtn->isChecked()){
 
+			//uncheck button
 			ui->axialViewBtn->setChecked(false);
 
+			//updating refrences
 			viewerAxial->GetRenderer()->AddActor(sagitalRefInAxialViewActor);
+			viewerAxial->GetRenderer()->RemoveActor(axialCenterRefActor);
 
+			//change reslice slider to current position
 			if((dimensions[2]-1)>=(dimensions[0]-1)){
 				ui->sliceSld->setValue(sliceCoronal);
 				ui->sliceSld->setRange(0,dimensions[1]-1);
@@ -755,8 +960,17 @@ void MainWindow::coronalBtnClicked(bool value)
 				ui->sliceSld->setValue(sliceCoronal);
 			}
 
+			//remove observer
+			imageStyleAxial->RemoveAllObservers();
+
+		}else if(ui->volViewBtn->isChecked()){
+			
+			//uncheck button
+			ui->volViewBtn->setChecked(false);
+		
 		}
 
+		//change rotation sliders to current position
 		ui->rotXSld->setValue(angleXCoronal);
 		ui->rotYSld->setValue(angleYCoronal);
 		ui->rotZSld->setValue(angleZCoronal);
@@ -766,16 +980,23 @@ void MainWindow::coronalBtnClicked(bool value)
 
 void MainWindow::volBtnClicked(bool value)
 {
+	//check button
 	ui->volViewBtn->setChecked(true);
-
-	if(ui->displayOneBtn->isChecked()){
-		sagitalWidget->hide();
-		axialWidget->hide();
-		coronalWidget->hide();
-		volWidget->show();
-	}
 	
 	if(value){
+
+		//uncheck buttons
+		ui->rotCenterBtn->setChecked(false);
+
+		//change the view when only one view is active 
+		if(ui->displayOneBtn->isChecked()){
+			sagitalWidget->hide();
+			axialWidget->hide();
+			coronalWidget->hide();
+			volWidget->show();
+		}
+
+		//uncheck buttons
 		ui->sagitalViewBtn->setChecked(false);
 		ui->axialViewBtn->setChecked(false);
 		ui->coronalViewBtn->setChecked(false);
@@ -784,9 +1005,11 @@ void MainWindow::volBtnClicked(bool value)
 
 void MainWindow::allBtnClicked(bool value)
 {
+	//check and uncheck view buttons
 	ui->displayAllBtn->setChecked(true);
 	ui->displayOneBtn->setChecked(false);
 
+	//show all views
 	if(value){
 		sagitalWidget->show();
 		axialWidget->show();
@@ -797,30 +1020,101 @@ void MainWindow::allBtnClicked(bool value)
 
 void MainWindow::oneBtnClicked(bool value)
 {
+	//check and uncheck view buttons
 	ui->displayOneBtn->setChecked(true);
 	ui->displayAllBtn->setChecked(false);
 
 	if(value){
+
 		if(ui->sagitalViewBtn->isChecked()){
+
+			//showing selected view
 			sagitalWidget->show();
 			axialWidget->hide();
 			coronalWidget->hide();
 			volWidget->hide();
+
 		}else if(ui->axialViewBtn->isChecked()){
+
+			//showing selected view
 			sagitalWidget->hide();
 			axialWidget->show();
 			coronalWidget->hide();
 			volWidget->hide();
+
 		}else if(ui->coronalViewBtn->isChecked()){
+
+			//showing selected view
 			sagitalWidget->hide();
 			axialWidget->hide();
 			coronalWidget->show();
 			volWidget->hide();
+
 		}else if(ui->volViewBtn->isChecked()){
+
+			//showing selected view
 			sagitalWidget->hide();
 			axialWidget->hide();
 			coronalWidget->hide();
 			volWidget->show();
+
 		}
 	}
+}
+
+void MainWindow::rotCenterBtnClicked(bool value)
+{
+	if(value){
+		
+		//initialize picker objects
+		vtkSmartPointer<vtkPropPicker> propPicker = vtkSmartPointer<vtkPropPicker>::New();
+		vtkSmartPointer<QVTKImageWidgetCommand<QVTKWidget> > callback = vtkSmartPointer<QVTKImageWidgetCommand<QVTKWidget> >::New();
+
+		callback->SetMainWindow(this);
+		propPicker->PickFromListOn();
+		
+		if(ui->sagitalViewBtn->isChecked()){
+
+			std::cout<<"Change rotation center in sagital view"<<std::endl;
+
+			//add observer to selecter view
+			propPicker->AddPickList(imageActorSagital);
+			callback->SetPicker(propPicker);
+			callback->SetImageViewer(viewerSagital);
+			imageStyleSagital->AddObserver(vtkCommand::MouseMoveEvent, callback);
+
+		}else if(ui->axialViewBtn->isChecked()){
+
+			std::cout<<"Change rotation center in axial view"<<std::endl;
+
+			//add observer to selecter view
+			propPicker->AddPickList(imageActorAxial);
+			callback->SetPicker(propPicker);
+			callback->SetImageViewer(viewerAxial);
+			imageStyleAxial->AddObserver(vtkCommand::MouseMoveEvent, callback);
+
+		}else if(ui->coronalViewBtn->isChecked()){
+
+			std::cout<<"Change rotation center in coronal view"<<std::endl;
+
+			//add observer to selecter view
+			propPicker->AddPickList(imageActorCoronal);
+			callback->SetPicker(propPicker);
+			callback->SetImageViewer(viewerCoronal);
+			imageStyleCoronal->AddObserver(vtkCommand::MouseMoveEvent, callback);
+
+		}
+	}else{
+	
+		//remove observers from all views
+		imageStyleSagital->RemoveAllObservers();
+		imageStyleAxial->RemoveAllObservers();
+		imageStyleCoronal->RemoveAllObservers();
+
+	}
+}
+
+void MainWindow::segmentBtnClicked(bool value)
+{	
+
 }

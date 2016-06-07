@@ -76,6 +76,19 @@
        </layout>
       </item>
       <item>
+       <spacer name="verticalSpacer_2">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>40</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
        <layout class="QGridLayout" name="refImage">
         <item row="0" column="0">
          <widget class="QPushButton" name="sagitalViewBtn">
@@ -149,6 +162,56 @@
         </item>
        </layout>
       </item>
+      <item>
+       <spacer name="verticalSpacer_3">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>40</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <layout class="QVBoxLayout" name="verticalLayout">
+        <item>
+         <widget class="QPushButton" name="rotCenterBtn">
+          <property name="text">
+           <string>Change rot</string>
+          </property>
+          <property name="checkable">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="segmentBtn">
+          <property name="text">
+           <string>Segment</string>
+          </property>
+          <property name="checkable">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <spacer name="verticalSpacer">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>40</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
      </layout>
     </item>
     <item row="1" column="0">
@@ -195,7 +258,7 @@
      <x>0</x>
      <y>0</y>
      <width>1087</width>
-     <height>21</height>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuOpen">
@@ -311,8 +374,8 @@
    <slot>sagitalBtnClicked(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>999</x>
-     <y>410</y>
+     <x>1012</x>
+     <y>117</y>
     </hint>
     <hint type="destinationlabel">
      <x>544</x>
@@ -327,8 +390,8 @@
    <slot>axialBtnClicked(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1050</x>
-     <y>395</y>
+     <x>1060</x>
+     <y>117</y>
     </hint>
     <hint type="destinationlabel">
      <x>590</x>
@@ -343,8 +406,8 @@
    <slot>coronalBtnClicked(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1000</x>
-     <y>505</y>
+     <x>1012</x>
+     <y>152</y>
     </hint>
     <hint type="destinationlabel">
      <x>544</x>
@@ -359,8 +422,8 @@
    <slot>volBtnClicked(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1052</x>
-     <y>511</y>
+     <x>1060</x>
+     <y>152</y>
     </hint>
     <hint type="destinationlabel">
      <x>1073</x>
@@ -375,8 +438,8 @@
    <slot>allBtnClicked(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>997</x>
-     <y>171</y>
+     <x>1012</x>
+     <y>80</y>
     </hint>
     <hint type="destinationlabel">
      <x>1003</x>
@@ -391,12 +454,44 @@
    <slot>oneBtnClicked(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1057</x>
-     <y>180</y>
+     <x>1060</x>
+     <y>80</y>
     </hint>
     <hint type="destinationlabel">
      <x>1067</x>
      <y>148</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>rotCenterBtn</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>rotCenterBtnClicked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1034</x>
+     <y>169</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1080</x>
+     <y>182</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>segmentBtn</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>MainWindow</receiver>
+   <slot>segmentBtnClicked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1066</x>
+     <y>207</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1082</x>
+     <y>216</y>
     </hint>
    </hints>
   </connection>
@@ -413,5 +508,7 @@
   <slot>volBtnClicked(bool)</slot>
   <slot>allBtnClicked(bool)</slot>
   <slot>oneBtnClicked(bool)</slot>
+  <slot>rotCenterBtnClicked(bool)</slot>
+  <slot>segmentBtnClicked(bool)</slot>
  </slots>
 </ui>

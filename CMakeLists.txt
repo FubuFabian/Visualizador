@@ -29,9 +29,9 @@ INCLUDE_DIRECTORIES(
   ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-SET(AppSrcs main.cpp mainwindow.cpp)
+SET(AppSrcs main.cpp mainwindow.cpp QVTKImageWidgetCommand.cpp)
 
-SET(AppHeaders mainwindow.h)
+SET(AppHeaders mainwindow.h QVTKImageWidgetCommand.h)
 
 SET(AppUI mainwindow.ui)
 
