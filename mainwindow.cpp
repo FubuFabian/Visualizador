@@ -8,7 +8,7 @@
 #include <vtkVolumeRayCastCompositeFunction.h>
 #include <vtkColorTransferFunction.h>
 #include <vtkCamera.h>
-#include <vtkImageChangeInformation.h>
+#include <vtkProperty.h>
 
 #include <vnl/vnl_matrix.h>
 
@@ -136,28 +136,29 @@ void MainWindow::displayVol()
 
 void MainWindow::setRenderingData()
 {
-	imageStyle = vtkSmartPointer<vtkInteractorStyleImage>::New();
-
+	imageStyleSagital = vtkSmartPointer<vtkInteractorStyleImage>::New();
 	viewerSagital = vtkSmartPointer<vtkImageViewer2>::New();
 	imageActorSagital = vtkSmartPointer<vtkImageActor>::New();
     sagitalWidget->SetRenderWindow(viewerSagital->GetRenderWindow());
 	imageActorSagital = viewerSagital->GetImageActor();
 	imageActorSagital->InterpolateOff();
-	viewerSagital->GetRenderWindow()->GetInteractor()->SetInteractorStyle(imageStyle);
+	viewerSagital->GetRenderWindow()->GetInteractor()->SetInteractorStyle(imageStyleSagital);
 
+	imageStyleAxial = vtkSmartPointer<vtkInteractorStyleImage>::New();
 	viewerAxial = vtkSmartPointer<vtkImageViewer2>::New();
 	imageActorAxial = vtkSmartPointer<vtkImageActor>::New();
     axialWidget->SetRenderWindow(viewerAxial->GetRenderWindow());
 	imageActorAxial = viewerSagital->GetImageActor();
 	imageActorAxial->InterpolateOff();
-	viewerAxial->GetRenderWindow()->GetInteractor()->SetInteractorStyle(imageStyle);
+	viewerAxial->GetRenderWindow()->GetInteractor()->SetInteractorStyle(imageStyleAxial);
 
+	imageStyleCoronal = vtkSmartPointer<vtkInteractorStyleImage>::New();
 	viewerCoronal = vtkSmartPointer<vtkImageViewer2>::New();
 	imageActorCoronal = vtkSmartPointer<vtkImageActor>::New();
     coronalWidget->SetRenderWindow(viewerCoronal->GetRenderWindow());
 	imageActorCoronal = viewerSagital->GetImageActor();
 	imageActorCoronal->InterpolateOff();
-	viewerCoronal->GetRenderWindow()->GetInteractor()->SetInteractorStyle(imageStyle);
+	viewerCoronal->GetRenderWindow()->GetInteractor()->SetInteractorStyle(imageStyleCoronal);
 }
 
 void MainWindow::setSlicesData()
@@ -220,6 +221,53 @@ void MainWindow::configSagitalView()
 	reslicerSagital->SetResliceAxes(resliceAxesSagital);
 	reslicerSagital->SetResliceTransform(transformSagital);
 	reslicerSagital->SetInterpolationModeToLinear();
+	
+	sagitalRefInAxialView = vtkSmartPointer<vtkLineSource>::New();
+	sagitalRefInAxialViewMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+	sagitalRefInAxialViewActor = vtkSmartPointer<vtkActor>::New();
+
+	double p0Axial[3] = {sliceSagital*spacing[0],dimensions[1]*spacing[1],0.0};
+	double p1Axial[3] = {sliceSagital*spacing[0],0.0,0.0};
+	
+	sagitalRefInAxialView->SetPoint1(p0Axial);
+	sagitalRefInAxialView->SetPoint2(p1Axial);
+	sagitalRefInAxialView->Update();
+	sagitalRefInAxialViewMapper->SetInputConnection(sagitalRefInAxialView->GetOutputPort());
+	sagitalRefInAxialViewActor->SetMapper(sagitalRefInAxialViewMapper);
+	sagitalRefInAxialViewActor->GetProperty()->SetLineWidth(1);
+	sagitalRefInAxialViewActor->GetProperty()->SetColor(0,162,232);
+
+	sagitalRefInCoronalView = vtkSmartPointer<vtkLineSource>::New();
+	sagitalRefInCoronalViewMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+	sagitalRefInCoronalViewActor = vtkSmartPointer<vtkActor>::New();
+
+	double p0Coronal[3] = {sliceSagital*spacing[0],dimensions[2]*spacing[2],0.0};
+	double p1Coronal[3] = {sliceSagital*spacing[0],0.0,0.0};
+	
+	sagitalRefInCoronalView->SetPoint1(p0Coronal);
+	sagitalRefInCoronalView->SetPoint2(p1Coronal);
+	sagitalRefInCoronalView->Update();
+	sagitalRefInCoronalViewMapper->SetInputConnection(sagitalRefInCoronalView->GetOutputPort());
+	sagitalRefInCoronalViewActor->SetMapper(sagitalRefInCoronalViewMapper);
+	sagitalRefInCoronalViewActor->GetProperty()->SetLineWidth(1);
+	sagitalRefInCoronalViewActor->GetProperty()->SetColor(0,162,232);
+
+	viewerAxial->GetRenderer()->AddActor(sagitalRefInAxialViewActor);
+	viewerCoronal->GetRenderer()->AddActor(sagitalRefInCoronalViewActor);
+
+	sagitalCenterRef = vtkSmartPointer<vtkRegularPolygonSource>::New();
+	sagitalCenterRefMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+	sagitalCenterRefActor = vtkSmartPointer<vtkActor>::New();
+ 
+	sagitalCenterRef->SetNumberOfSides(50);
+	sagitalCenterRef->SetRadius(1);
+	sagitalCenterRef->SetCenter(positionCenter[1],positionCenter[2],0);
+
+	sagitalCenterRefMapper->SetInputConnection(sagitalCenterRef->GetOutputPort());;
+	sagitalCenterRefActor->SetMapper(sagitalCenterRefMapper);
+	sagitalCenterRefActor->GetProperty()->SetColor(1.0,0.59,0.08);
+
+	viewerSagital->GetRenderer()->AddActor(sagitalCenterRefActor);
 }
 
 void MainWindow::configAxialView()
@@ -243,6 +291,38 @@ void MainWindow::configAxialView()
 	reslicerAxial->SetResliceAxes(resliceAxesAxial);
 	reslicerAxial->SetResliceTransform(transformAxial);
 	reslicerAxial->SetInterpolationModeToLinear();
+
+	axialRefInSagitalView = vtkSmartPointer<vtkLineSource>::New();
+	axialRefInSagitalViewMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+	axialRefInSagitalViewActor = vtkSmartPointer<vtkActor>::New();
+
+	double p0Sagital[3] = {dimensions[1]*spacing[1],sliceAxial*spacing[2],0.0};
+	double p1Sagital[3] = {0.0,sliceAxial*spacing[2],0.0};
+	
+	axialRefInSagitalView->SetPoint1(p0Sagital);
+	axialRefInSagitalView->SetPoint2(p1Sagital);
+	axialRefInSagitalView->Update();
+	axialRefInSagitalViewMapper->SetInputConnection(axialRefInSagitalView->GetOutputPort());
+	axialRefInSagitalViewActor->SetMapper(axialRefInSagitalViewMapper);
+	axialRefInSagitalViewActor->GetProperty()->SetLineWidth(1);
+	axialRefInSagitalViewActor->GetProperty()->SetColor(237,0,0);
+
+	axialRefInCoronalView = vtkSmartPointer<vtkLineSource>::New();
+	axialRefInCoronalViewMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+	axialRefInCoronalViewActor = vtkSmartPointer<vtkActor>::New();
+
+	double p0Coronal[3] = {dimensions[0]*spacing[0],sliceAxial*spacing[2],0.0};
+	double p1Coronal[3] = {0.0,sliceAxial*spacing[2],0.0};
+	
+	axialRefInCoronalView->SetPoint1(p0Coronal);
+	axialRefInCoronalView->SetPoint2(p1Coronal);
+	axialRefInCoronalView->Update();
+	axialRefInCoronalViewMapper->SetInputConnection(axialRefInCoronalView->GetOutputPort());
+	axialRefInCoronalViewActor->SetMapper(axialRefInCoronalViewMapper);
+	axialRefInCoronalViewActor->GetProperty()->SetLineWidth(1);
+	axialRefInCoronalViewActor->GetProperty()->SetColor(237,0,0);
+
+	viewerCoronal->GetRenderer()->AddActor(axialRefInCoronalViewActor);
 }
 
 void MainWindow::configCoronalView()
@@ -266,6 +346,38 @@ void MainWindow::configCoronalView()
 	reslicerCoronal->SetResliceAxes(resliceAxesCoronal);
 	reslicerCoronal->SetResliceTransform(transformCoronal);
 	reslicerCoronal->SetInterpolationModeToLinear();
+
+	coronalRefInSagitalView = vtkSmartPointer<vtkLineSource>::New();
+	coronalRefInSagitalViewMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+	coronalRefInSagitalViewActor = vtkSmartPointer<vtkActor>::New();
+
+	double p0Sagital[3] = {sliceCoronal*spacing[1],dimensions[2]*spacing[2],0.0};
+	double p1Sagital[3] = {sliceCoronal*spacing[1],0.0,0.0};
+	
+	coronalRefInSagitalView->SetPoint1(p0Sagital);
+	coronalRefInSagitalView->SetPoint2(p1Sagital);
+	coronalRefInSagitalView->Update();
+	coronalRefInSagitalViewMapper->SetInputConnection(coronalRefInSagitalView->GetOutputPort());
+	coronalRefInSagitalViewActor->SetMapper(coronalRefInSagitalViewMapper);
+	coronalRefInSagitalViewActor->GetProperty()->SetLineWidth(1);
+	coronalRefInSagitalViewActor->GetProperty()->SetColor(237,128,0);
+
+	coronalRefInAxialView = vtkSmartPointer<vtkLineSource>::New();
+	coronalRefInAxialViewMapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+	coronalRefInAxialViewActor = vtkSmartPointer<vtkActor>::New();
+
+	double p0Axial[3] = {dimensions[0]*spacing[0],sliceCoronal*spacing[1],0.0};
+	double p1Axial[3] = {0.0,sliceCoronal*spacing[1],0.0};
+	
+	coronalRefInAxialView->SetPoint1(p0Axial);
+	coronalRefInAxialView->SetPoint2(p1Axial);
+	coronalRefInAxialView->Update();
+	coronalRefInAxialViewMapper->SetInputConnection(coronalRefInAxialView->GetOutputPort());
+	coronalRefInAxialViewActor->SetMapper(coronalRefInAxialViewMapper);
+	coronalRefInAxialViewActor->GetProperty()->SetLineWidth(1);
+	coronalRefInAxialViewActor->GetProperty()->SetColor(237,128,0);
+
+	viewerAxial->GetRenderer()->AddActor(coronalRefInAxialViewActor);
 }
 
 void MainWindow::displaySagital()
@@ -274,6 +386,10 @@ void MainWindow::displaySagital()
 	sliceImageSagital = reslicerSagital->GetOutput();
 	sliceImageSagital->Update();
 
+	
+	viewerAxial->Render();
+	viewerCoronal->Render();
+	
 	viewerSagital->SetInput(sliceImageSagital);
     viewerSagital->Render();
 }
@@ -284,6 +400,9 @@ void MainWindow::displayAxial()
 	sliceImageAxial = reslicerAxial->GetOutput();
 	sliceImageAxial->Update();
 
+	viewerSagital->Render();
+	viewerCoronal->Render();
+
 	viewerAxial->SetInput(sliceImageAxial);
     viewerAxial->Render();
 }
@@ -293,6 +412,9 @@ void MainWindow::displayCoronal()
 	reslicerCoronal->Update();
 	sliceImageCoronal = reslicerCoronal->GetOutput();
 	sliceImageCoronal->Update();
+
+	viewerSagital->Render();
+	viewerAxial->Render();
 
 	viewerCoronal->SetInput(sliceImageCoronal);
     viewerCoronal->Render();
@@ -319,19 +441,74 @@ void MainWindow::openMHD()
 void MainWindow::reslice(int slice)
 {
 	if(ui->sagitalViewBtn->isChecked()){
+		
 		double translate = slice - sliceSagital;
 		transformSagital->Translate(translate*spacing[0],0,0);
 		sliceSagital = slice;
+
+		double p0Axial[3] = {sliceSagital*spacing[0],dimensions[1]*spacing[1],0.0};
+		double p1Axial[3] = {sliceSagital*spacing[0],0.0,0.0};
+	
+		sagitalRefInAxialView->SetPoint1(p0Axial);
+		sagitalRefInAxialView->SetPoint2(p1Axial);
+		sagitalRefInAxialView->Update();
+		sagitalRefInAxialViewMapper->Update();
+
+		double p0Coronal[3] = {sliceSagital*spacing[0],dimensions[2]*spacing[2],0.0};
+		double p1Coronal[3] = {sliceSagital*spacing[0],0.0,0.0};
+	
+		sagitalRefInCoronalView->SetPoint1(p0Coronal);
+		sagitalRefInCoronalView->SetPoint2(p1Coronal);
+		sagitalRefInCoronalView->Update();
+		sagitalRefInCoronalViewMapper->Update();
+
 		displaySagital();
+
 	}else if(ui->axialViewBtn->isChecked()){
+
 		double translate = slice - sliceAxial;
 		transformAxial->Translate(0,0,translate*spacing[2]);
 		sliceAxial = slice;
 		displayAxial();
+
+		double p0Sagital[3] = {dimensions[1]*spacing[1],sliceAxial*spacing[2],0.0};
+		double p1Sagital[3] = {0.0,sliceAxial*spacing[2],0.0};
+	
+		axialRefInSagitalView->SetPoint1(p0Sagital);
+		axialRefInSagitalView->SetPoint2(p1Sagital);
+		axialRefInSagitalView->Update();
+		axialRefInSagitalViewMapper->Update();
+
+		double p0Coronal[3] = {dimensions[0]*spacing[0],sliceAxial*spacing[2],0.0};
+		double p1Coronal[3] = {0.0,sliceAxial*spacing[2],0.0};
+	
+		axialRefInCoronalView->SetPoint1(p0Coronal);
+		axialRefInCoronalView->SetPoint2(p1Coronal);
+		axialRefInCoronalView->Update();
+		axialRefInCoronalViewMapper->Update();
+
 	}else if(ui->coronalViewBtn->isChecked()){
+
 		double translate = slice - sliceCoronal;
 		transformCoronal->Translate(0,translate*spacing[1],0);
 		sliceCoronal = slice;
+
+		double p0Sagital[3] = {sliceCoronal*spacing[1],dimensions[2]*spacing[2],0.0};
+		double p1Sagital[3] = {sliceCoronal*spacing[1],0.0,0.0};
+	
+		coronalRefInSagitalView->SetPoint1(p0Sagital);
+		coronalRefInSagitalView->SetPoint2(p1Sagital);
+		coronalRefInSagitalView->Update();
+		coronalRefInSagitalViewMapper->Update();
+
+		double p0Axial[3] = {dimensions[0]*spacing[0],sliceCoronal*spacing[1],0.0};
+		double p1Axial[3] = {0.0,sliceCoronal*spacing[1],0.0};
+	
+		coronalRefInAxialView->SetPoint1(p0Axial);
+		coronalRefInAxialView->SetPoint2(p1Axial);
+		coronalRefInAxialView->Update();
+		coronalRefInAxialViewMapper->Update();
+
 		displayCoronal();
 	}
 }
@@ -429,9 +606,19 @@ void MainWindow::sagitalBtnClicked(bool value)
 	}
 
 	if(value){
+
+		viewerSagital->GetRenderer()->RemoveActor(axialRefInSagitalViewActor);
+		viewerSagital->GetRenderer()->RemoveActor(coronalRefInSagitalViewActor);
+
+		viewerAxial->GetRenderer()->AddActor(sagitalRefInAxialViewActor);
+		viewerCoronal->GetRenderer()->AddActor(sagitalRefInCoronalViewActor);
 		
 		if(ui->axialViewBtn->isChecked()){
+
 			ui->axialViewBtn->setChecked(false);
+
+			viewerAxial->GetRenderer()->AddActor(coronalRefInAxialViewActor);
+
 			if((dimensions[2]-1)>=(dimensions[0]-1)){
 				ui->sliceSld->setValue(sliceSagital);
 				ui->sliceSld->setRange(0,dimensions[0]-1);
@@ -439,8 +626,13 @@ void MainWindow::sagitalBtnClicked(bool value)
 				ui->sliceSld->setRange(0,dimensions[0]-1);
 				ui->sliceSld->setValue(sliceSagital);
 			}
+
 		}else if(ui->coronalViewBtn->isChecked()){
+
 			ui->coronalViewBtn->setChecked(false);
+
+			viewerCoronal->GetRenderer()->AddActor(axialRefInCoronalViewActor);
+
 			if((dimensions[1]-1)>=(dimensions[0]-1)){
 				ui->sliceSld->setValue(sliceSagital);
 				ui->sliceSld->setRange(0,dimensions[0]-1);
@@ -448,6 +640,7 @@ void MainWindow::sagitalBtnClicked(bool value)
 				ui->sliceSld->setRange(0,dimensions[0]-1);
 				ui->sliceSld->setValue(sliceSagital);
 			}
+
 		}
 
 		ui->rotXSld->setValue(angleXSagital);
@@ -470,9 +663,19 @@ void MainWindow::axialBtnClicked(bool value)
 	}
 
 	if(value){
-		
+
+		viewerAxial->GetRenderer()->RemoveActor(sagitalRefInAxialViewActor);
+		viewerAxial->GetRenderer()->RemoveActor(coronalRefInAxialViewActor);
+
+		viewerSagital->GetRenderer()->AddActor(axialRefInSagitalViewActor);
+		viewerCoronal->GetRenderer()->AddActor(axialRefInCoronalViewActor);
+
 		if(ui->sagitalViewBtn->isChecked()){
+
 			ui->sagitalViewBtn->setChecked(false);
+
+			viewerSagital->GetRenderer()->AddActor(coronalRefInSagitalViewActor);
+
 			if((dimensions[0]-1)>=(dimensions[2]-1)){
 				ui->sliceSld->setValue(sliceAxial);
 				ui->sliceSld->setRange(0,dimensions[2]-1);
@@ -480,8 +683,13 @@ void MainWindow::axialBtnClicked(bool value)
 				ui->sliceSld->setRange(0,dimensions[2]-1);
 				ui->sliceSld->setValue(sliceAxial);
 			}
+
 		}else if(ui->coronalViewBtn->isChecked()){
+
 			ui->coronalViewBtn->setChecked(false);
+
+			viewerCoronal->GetRenderer()->AddActor(sagitalRefInCoronalViewActor);
+
 			if((dimensions[1]-1)>=(dimensions[2]-1)){
 				ui->sliceSld->setValue(sliceAxial);
 				ui->sliceSld->setRange(0,dimensions[2]-1);
@@ -489,6 +697,7 @@ void MainWindow::axialBtnClicked(bool value)
 				ui->sliceSld->setRange(0,dimensions[2]-1);
 				ui->sliceSld->setValue(sliceAxial);
 			}
+
 		}
 
 		ui->rotXSld->setValue(angleXAxial);
@@ -512,8 +721,18 @@ void MainWindow::coronalBtnClicked(bool value)
 
 	if(value){
 		
+		viewerCoronal->GetRenderer()->RemoveActor(sagitalRefInCoronalViewActor);
+		viewerCoronal->GetRenderer()->RemoveActor(axialRefInCoronalViewActor);
+		
+		viewerSagital->GetRenderer()->AddActor(coronalRefInSagitalViewActor);
+		viewerAxial->GetRenderer()->AddActor(coronalRefInAxialViewActor);
+
 		if(ui->sagitalViewBtn->isChecked()){
+
 			ui->sagitalViewBtn->setChecked(false);
+
+			viewerSagital->GetRenderer()->AddActor(axialRefInSagitalViewActor);
+
 			if((dimensions[0]-1)>=(dimensions[1]-1)){
 				ui->sliceSld->setValue(sliceCoronal);
 				ui->sliceSld->setRange(0,dimensions[1]-1);
@@ -521,8 +740,13 @@ void MainWindow::coronalBtnClicked(bool value)
 				ui->sliceSld->setRange(0,dimensions[1]-1);
 				ui->sliceSld->setValue(sliceCoronal);
 			}
+
 		}else if(ui->axialViewBtn->isChecked()){
+
 			ui->axialViewBtn->setChecked(false);
+
+			viewerAxial->GetRenderer()->AddActor(sagitalRefInAxialViewActor);
+
 			if((dimensions[2]-1)>=(dimensions[0]-1)){
 				ui->sliceSld->setValue(sliceCoronal);
 				ui->sliceSld->setRange(0,dimensions[1]-1);
@@ -530,6 +754,7 @@ void MainWindow::coronalBtnClicked(bool value)
 				ui->sliceSld->setRange(0,dimensions[1]-1);
 				ui->sliceSld->setValue(sliceCoronal);
 			}
+
 		}
 
 		ui->rotXSld->setValue(angleXCoronal);

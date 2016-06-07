@@ -18,6 +18,12 @@
 #include <vtkImageActor.h>
 #include <vtkInteractorStyleImage.h>
 #include <vtkTransform.h>
+#include <vtkRegularPolygonSource.h>
+#include <vtkPolyData.h>
+#include <vtkPolyDataMapper.h>
+#include <vtkActor.h>
+#include <vtkLineSource.h>
+
 
 
 namespace Ui {
@@ -176,6 +182,47 @@ private:
 	vtkSmartPointer<vtkImageActor> imageActorSagital;
 
 	/**
+	Interactor style of the Sagital viewer, it has the basic interaction with a 2D image
+	**/
+	vtkSmartPointer<vtkInteractorStyleImage> imageStyleSagital;
+
+	/**
+	Sagital Slice reference in the axial view
+	**/
+	vtkSmartPointer<vtkLineSource> sagitalRefInAxialView;
+
+	/**
+	Sagital Slice reference in the axial view actor
+	**/
+	vtkSmartPointer<vtkActor> sagitalRefInAxialViewActor;
+
+	/**
+	Sagital Slice reference in the axial view mapper
+	**/
+	vtkSmartPointer<vtkPolyDataMapper> sagitalRefInAxialViewMapper;
+
+	/**
+	Sagital Slice reference in the coronal view
+	**/
+	vtkSmartPointer<vtkLineSource> sagitalRefInCoronalView;
+	
+	/**
+	Sagital Slice reference in the coronal view actor
+	**/
+	vtkSmartPointer<vtkActor> sagitalRefInCoronalViewActor;
+	
+	/**
+	Sagital Slice reference in the coronal view mapper
+	**/
+	vtkSmartPointer<vtkPolyDataMapper> sagitalRefInCoronalViewMapper;
+
+	vtkSmartPointer<vtkRegularPolygonSource> sagitalCenterRef;
+
+	vtkSmartPointer<vtkPolyDataMapper> sagitalCenterRefMapper;
+
+	vtkSmartPointer<vtkActor> sagitalCenterRefActor;
+
+	/**
 	Data for the axial plane
 	**/
 	static const double axialElements[16];
@@ -229,6 +276,41 @@ private:
 	ImageActor of the sliced axial image
 	**/
 	vtkSmartPointer<vtkImageActor> imageActorAxial;
+
+	/**
+	Interactor style of the axial viewer, it has the basic interaction with a 2D image
+	**/
+	vtkSmartPointer<vtkInteractorStyleImage> imageStyleAxial;
+
+	/**
+	Axial Slice reference in the sagital view
+	**/
+	vtkSmartPointer<vtkLineSource> axialRefInSagitalView;
+
+	/**
+	Axial Slice reference in the sagital view actor
+	**/
+	vtkSmartPointer<vtkActor> axialRefInSagitalViewActor;
+
+	/**
+	Axial Slice reference in the sagital view mapper
+	**/
+	vtkSmartPointer<vtkPolyDataMapper> axialRefInSagitalViewMapper;
+
+	/**
+	Axial Slice reference in the coronal view
+	**/
+	vtkSmartPointer<vtkLineSource> axialRefInCoronalView;
+	
+	/**
+	Axial Slice reference in the coronal view actor
+	**/
+	vtkSmartPointer<vtkActor> axialRefInCoronalViewActor;
+	
+	/**
+	Axial Slice reference in the coronal view mapper
+	**/
+	vtkSmartPointer<vtkPolyDataMapper> axialRefInCoronalViewMapper;
 
 	/**
 	Data for the coronal plane
@@ -285,11 +367,40 @@ private:
 	**/
 	vtkSmartPointer<vtkImageActor> imageActorCoronal;
 
+	/**
+	Interactor style of the coronal viewer, it has the basic interaction with a 2D image
+	**/
+	vtkSmartPointer<vtkInteractorStyleImage> imageStyleCoronal;
 
 	/**
-	Interactor style of the viewer, it has the basic interaction with a 2D image
+	Coronal Slice reference in the sagital view
 	**/
-	vtkSmartPointer<vtkInteractorStyleImage> imageStyle;
+	vtkSmartPointer<vtkLineSource> coronalRefInSagitalView;
+
+	/**
+	Coronal Slice reference in the sagital view actor
+	**/
+	vtkSmartPointer<vtkActor> coronalRefInSagitalViewActor;
+
+	/**
+	Coronal Slice reference in the sagital view mapper
+	**/
+	vtkSmartPointer<vtkPolyDataMapper> coronalRefInSagitalViewMapper;
+
+	/**
+	Coronal Slice reference in the axial view
+	**/
+	vtkSmartPointer<vtkLineSource> coronalRefInAxialView;
+	
+	/**
+	Coronal Slice reference in the axial view actor
+	**/
+	vtkSmartPointer<vtkActor> coronalRefInAxialViewActor;
+	
+	/**
+	Coronal Slice reference in the axial view mapper
+	**/
+	vtkSmartPointer<vtkPolyDataMapper> coronalRefInAxialViewMapper;
 
 	/**
 	Display the volume in volWidget
