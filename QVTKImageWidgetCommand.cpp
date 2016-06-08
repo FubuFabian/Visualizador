@@ -44,17 +44,10 @@ template<class Widget>
 void QVTKImageWidgetCommand<Widget>::Execute(vtkObject* caller, unsigned long event, void *vtkNotUsed(callData))
 {
   vtkSmartPointer<vtkRenderWindowInteractor> interactor = Viewer->GetRenderWindow()->GetInteractor();
-  
-  // Get a shortcut to the pixel data.
-  vtkSmartPointer<vtkImageData> imageData = Viewer->GetInput();
       
   // if the mouse is moving inside the viewer
-  if (event == vtkCommand::MouseMoveEvent)
+  if (event == vtkCommand::LeftButtonPressEvent)
     {
-            
-      int* extent = imageData->GetExtent();
-      int* dimension = imageData->GetDimensions();   
-      double* spacing = imageData->GetSpacing();
                           
       int* windowPosition = interactor->GetEventPosition();
 
@@ -66,30 +59,8 @@ void QVTKImageWidgetCommand<Widget>::Execute(vtkObject* caller, unsigned long ev
 
       double* imPos = this->Picker->GetPickPosition();
 
-	  int xImagePosition = vtkMath::Round(imPos[0]/spacing[0]);
-      int yImagePosition = vtkMath::Round(imPos[1]/spacing[1]);
-      int zImagePosition = 0;
-      
-      //int xImagePosition;
-      //int yImagePosition;
-      //int zImagePosition;
-          
-      //xImagePosition = vtkMath::Round(imPos[0]);
-      //yImagePosition = vtkMath::Round(imPos[1]);
-      //zImagePosition = Viewer->GetSlice();
-           
-      //int center[2];
-      //center[0] = floor((float)dimension[0]/2);
-      //center[1] = floor((float)dimension[1]/2);
-      
-      //int xClipPosition = (xImagePosition - extent[0]);
-      //int yClipPosition = (dimension[1]-1) - (yImagePosition - extent[2]);
-      //int zClipPosition = zImagePosition - extent[4];
+	  Mainwindow->setNewRotationCenter(imPos[0],imPos[1]);
 
-	  Mainwindow->setNewRotationCenter(xImagePosition,yImagePosition);
-
-      vtkInteractorStyle *style = vtkInteractorStyle::SafeDownCast(interactor->GetInteractorStyle());
-      style->OnMouseMove();
     }
 
 }

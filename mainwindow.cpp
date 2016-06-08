@@ -70,6 +70,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	coronalLayout->setSpacing(0);
 	coronalLayout->QLayout::addWidget(coronalWidget);
 	ui->coronalView->setLayout(coronalLayout);
+
 }
 
 MainWindow::~MainWindow()
@@ -79,7 +80,64 @@ MainWindow::~MainWindow()
 
 void MainWindow::setNewRotationCenter(double x, double y)
 {
-	std::cout<<x<<","<<y<<std::endl;
+	if(x==0&&y==0){
+
+		//click outside the image
+		std::cout<<"Please select a point inside the image"<<std::endl;
+		return;
+
+	}
+
+	if(ui->sagitalViewBtn->isChecked()){
+
+		//change rotation center in selected view
+		rotCenterSagital[0] = x;
+		rotCenterSagital[1] = y;
+
+		//change rotation center reference in selected view
+		sagitalCenterRef->SetCenter(rotCenterSagital[0],rotCenterSagital[1],0);
+		sagitalCenterRef->Update();
+		sagitalCenterRefMapper->Update();
+
+		std::cout<<"New rotation center: "<<rotCenterSagital[0]<<","<<rotCenterSagital[1]<<std::endl;
+
+		//displaying new rotation center reference in selected view
+		displaySagital();
+
+	}else if(ui->axialViewBtn->isChecked()){
+
+		//change rotation center in selected view
+		rotCenterAxial[0] = x;
+		rotCenterAxial[1] = y;
+
+		//change rotation center reference in selected view
+		axialCenterRef->SetCenter(rotCenterAxial[0],rotCenterAxial[1],0);
+		axialCenterRef->Update();
+		axialCenterRefMapper->Update();
+
+		std::cout<<"New rotation center: "<<rotCenterAxial[0]<<","<<rotCenterAxial[1]<<std::endl;
+
+		//displaying new rotation center reference in selected view
+		displayAxial();
+
+	}else if(ui->coronalViewBtn->isChecked()){
+
+		//change rotation center in selected view
+		rotCenterCoronal[0] = x;
+		rotCenterCoronal[1] = y;
+
+		//change rotation center reference in selected view
+		coronalCenterRef->SetCenter(rotCenterCoronal[0],rotCenterCoronal[1],0);
+		coronalCenterRef->Update();
+		coronalCenterRefMapper->Update();
+
+		std::cout<<"New rotation center: "<<rotCenterCoronal[0]<<","<<rotCenterCoronal[1]<<std::endl;
+
+		//displaying new rotation center reference in selected view
+		displayCoronal();
+
+	}
+
 }
 
 void MainWindow::displayVol()
@@ -87,8 +145,7 @@ void MainWindow::displayVol()
 	volumeProperty = vtkSmartPointer<vtkVolumeProperty>::New();
 
 	//setting volume rendering methods and properties
-    vtkSmartPointer<vtkVolumeRayCastCompositeFunction> rayCastFunction =
-                vtkSmartPointer<vtkVolumeRayCastCompositeFunction>::New();
+    vtkSmartPointer<vtkVolumeRayCastCompositeFunction> rayCastFunction = vtkSmartPointer<vtkVolumeRayCastCompositeFunction>::New();
 
     volumeScalarOpacity = vtkSmartPointer<vtkPiecewiseFunction>::New();
     volumeScalarOpacity->AddPoint(0,1.00);
@@ -104,8 +161,7 @@ void MainWindow::displayVol()
     volumeColor->AddRGBPoint(255,1.0,1.0,1.0);
     volumeProperty->SetColor(volumeColor);
 
-    vtkSmartPointer<vtkVolumeRayCastCompositeFunction> compositeFunction =
-            vtkSmartPointer<vtkVolumeRayCastCompositeFunction>::New();
+    vtkSmartPointer<vtkVolumeRayCastCompositeFunction> compositeFunction = vtkSmartPointer<vtkVolumeRayCastCompositeFunction>::New();
 
     vtkSmartPointer<vtkVolumeRayCastMapper> volumeMapper = vtkSmartPointer<vtkVolumeRayCastMapper>::New();
     volumeMapper->SetVolumeRayCastFunction(compositeFunction);
@@ -159,7 +215,7 @@ void MainWindow::setRenderingData()
 	viewerAxial = vtkSmartPointer<vtkImageViewer2>::New();
 	imageActorAxial = vtkSmartPointer<vtkImageActor>::New();
     axialWidget->SetRenderWindow(viewerAxial->GetRenderWindow());
-	imageActorAxial = viewerSagital->GetImageActor();
+	imageActorAxial = viewerAxial->GetImageActor();
 	imageActorAxial->InterpolateOff();
 	viewerAxial->GetRenderWindow()->GetInteractor()->SetInteractorStyle(imageStyleAxial);
 
@@ -168,7 +224,7 @@ void MainWindow::setRenderingData()
 	viewerCoronal = vtkSmartPointer<vtkImageViewer2>::New();
 	imageActorCoronal = vtkSmartPointer<vtkImageActor>::New();
     coronalWidget->SetRenderWindow(viewerCoronal->GetRenderWindow());
-	imageActorCoronal = viewerSagital->GetImageActor();
+	imageActorCoronal = viewerCoronal->GetImageActor();
 	imageActorCoronal->InterpolateOff();
 	viewerCoronal->GetRenderWindow()->GetInteractor()->SetInteractorStyle(imageStyleCoronal);
 }
@@ -665,7 +721,7 @@ void MainWindow::rotateY(int angle)
 	}else if(ui->coronalViewBtn->isChecked()){
 
 		//rotate slice
-		double rotate = angle - angleXCoronal;
+		double rotate = angle - angleYCoronal;
 		transformCoronal->Translate(-(rotCenterCoronal[0]),-(sliceCoronal*spacing[1]),-(rotCenterCoronal[1]));
 		transformCoronal->RotateY(rotate);
 		transformCoronal->Translate((rotCenterCoronal[0]),(sliceCoronal*spacing[1]),(rotCenterCoronal[1]));
@@ -707,7 +763,7 @@ void MainWindow::rotateZ(int angle)
 	}else if(ui->coronalViewBtn->isChecked()){
 
 		//rotate slice
-		double rotate = angle - angleXCoronal;
+		double rotate = angle - angleZCoronal;
 		transformCoronal->Translate(-(rotCenterCoronal[0]),-(sliceCoronal*spacing[1]),-(rotCenterCoronal[1]));
 		transformCoronal->RotateZ(rotate);
 		transformCoronal->Translate((rotCenterCoronal[0]),(sliceCoronal*spacing[1]),(rotCenterCoronal[1]));
@@ -1072,36 +1128,34 @@ void MainWindow::rotCenterBtnClicked(bool value)
 
 		callback->SetMainWindow(this);
 		propPicker->PickFromListOn();
+		callback->SetPicker(propPicker);
 		
 		if(ui->sagitalViewBtn->isChecked()){
 
-			std::cout<<"Change rotation center in sagital view"<<std::endl;
+			std::cout<<std::endl<<"Change rotation center in sagital view"<<std::endl;
 
 			//add observer to selecter view
 			propPicker->AddPickList(imageActorSagital);
-			callback->SetPicker(propPicker);
 			callback->SetImageViewer(viewerSagital);
-			imageStyleSagital->AddObserver(vtkCommand::MouseMoveEvent, callback);
+			imageStyleSagital->AddObserver(vtkCommand::LeftButtonPressEvent, callback);
 
 		}else if(ui->axialViewBtn->isChecked()){
 
-			std::cout<<"Change rotation center in axial view"<<std::endl;
+			std::cout<<std::endl<<"Change rotation center in axial view"<<std::endl;
 
 			//add observer to selecter view
 			propPicker->AddPickList(imageActorAxial);
-			callback->SetPicker(propPicker);
 			callback->SetImageViewer(viewerAxial);
-			imageStyleAxial->AddObserver(vtkCommand::MouseMoveEvent, callback);
+			imageStyleAxial->AddObserver(vtkCommand::LeftButtonPressEvent, callback);
 
 		}else if(ui->coronalViewBtn->isChecked()){
 
-			std::cout<<"Change rotation center in coronal view"<<std::endl;
+			std::cout<<std::endl<<"Change rotation center in coronal view"<<std::endl;
 
 			//add observer to selecter view
 			propPicker->AddPickList(imageActorCoronal);
-			callback->SetPicker(propPicker);
 			callback->SetImageViewer(viewerCoronal);
-			imageStyleCoronal->AddObserver(vtkCommand::MouseMoveEvent, callback);
+			imageStyleCoronal->AddObserver(vtkCommand::LeftButtonPressEvent, callback);
 
 		}
 	}else{
