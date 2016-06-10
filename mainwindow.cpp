@@ -140,6 +140,11 @@ void MainWindow::setNewRotationCenter(double x, double y)
 
 }
 
+void MainWindow::setSegmentedPath(vtkSmartPointer<vtkPolyData>)
+{
+	std::cout<<"segmento"<<std::endl;
+}
+
 void MainWindow::displayVol()
 {
 	volumeProperty = vtkSmartPointer<vtkVolumeProperty>::New();
@@ -782,9 +787,6 @@ void MainWindow::sagitalBtnClicked(bool value)
 
 	if(value){
 
-		//uncheck buttons
-		ui->rotCenterBtn->setChecked(false);
-
 		//change the view when only one view is active 
 		if(ui->displayOneBtn->isChecked()){
 			sagitalWidget->show();
@@ -821,8 +823,19 @@ void MainWindow::sagitalBtnClicked(bool value)
 				ui->sliceSld->setValue(sliceSagital);
 			}
 
-			//remove observer
-			imageStyleAxial->RemoveAllObservers();
+			//uncheck buttons and return view to normal
+			if(ui->rotCenterBtn->isChecked()){
+				ui->rotCenterBtn->setChecked(false);
+				imageStyleAxial->RemoveAllObservers();
+			}
+
+			if(ui->segmentBtn->isChecked()){
+				ui->segmentBtn->setChecked(false);
+				segmentationStyleAxial->clearTracer();
+				viewerAxial->GetRenderer()->AddActor(axialCenterRefActor);
+				viewerAxial->GetRenderWindow()->GetInteractor()->SetInteractorStyle(imageStyleAxial);
+				viewerAxial->Render();
+			}
 
 		}else if(ui->coronalViewBtn->isChecked()){
 
@@ -842,8 +855,19 @@ void MainWindow::sagitalBtnClicked(bool value)
 				ui->sliceSld->setValue(sliceSagital);
 			}
 
-			//remove observer
-			imageStyleCoronal->RemoveAllObservers();
+			//uncheck buttons and return view to normal
+			if(ui->rotCenterBtn->isChecked()){
+				ui->rotCenterBtn->setChecked(false);
+				imageStyleCoronal->RemoveAllObservers();
+			}
+
+			if(ui->segmentBtn->isChecked()){
+				ui->segmentBtn->setChecked(false);
+				segmentationStyleCoronal->clearTracer();
+				viewerCoronal->GetRenderer()->AddActor(coronalCenterRefActor);
+				viewerCoronal->GetRenderWindow()->GetInteractor()->SetInteractorStyle(imageStyleCoronal);
+				viewerCoronal->Render();
+			}
 
 		}else if(ui->volViewBtn->isChecked()){
 			
@@ -866,9 +890,6 @@ void MainWindow::axialBtnClicked(bool value)
 	ui->axialViewBtn->setChecked(true);
 
 	if(value){
-
-		//uncheck buttons
-		ui->rotCenterBtn->setChecked(false);
 
 		//change the view when only one view is active 
 		if(ui->displayOneBtn->isChecked()){
@@ -908,8 +929,19 @@ void MainWindow::axialBtnClicked(bool value)
 				ui->sliceSld->setValue(sliceAxial);
 			}
 
-			//remove observer
-			imageStyleSagital->RemoveAllObservers();
+			//uncheck buttons and return view to normal
+			if(ui->rotCenterBtn->isChecked()){
+				ui->rotCenterBtn->setChecked(false);
+				imageStyleSagital->RemoveAllObservers();
+			}
+
+			if(ui->segmentBtn->isChecked()){
+				ui->segmentBtn->setChecked(false);
+				segmentationStyleSagital->clearTracer();
+				viewerSagital->GetRenderer()->AddActor(sagitalCenterRefActor);
+				viewerSagital->GetRenderWindow()->GetInteractor()->SetInteractorStyle(imageStyleSagital);
+				viewerSagital->Render();
+			}
 
 		}else if(ui->coronalViewBtn->isChecked()){
 
@@ -929,8 +961,19 @@ void MainWindow::axialBtnClicked(bool value)
 				ui->sliceSld->setValue(sliceAxial);
 			}
 
-			//remove observer
-			imageStyleCoronal->RemoveAllObservers();
+			//uncheck buttons and return view to normal
+			if(ui->rotCenterBtn->isChecked()){
+				ui->rotCenterBtn->setChecked(false);
+				imageStyleCoronal->RemoveAllObservers();
+			}
+
+			if(ui->segmentBtn->isChecked()){
+				ui->segmentBtn->setChecked(false);
+				segmentationStyleCoronal->clearTracer();
+				viewerCoronal->GetRenderer()->AddActor(coronalCenterRefActor);
+				viewerCoronal->GetRenderWindow()->GetInteractor()->SetInteractorStyle(imageStyleCoronal);
+				viewerCoronal->Render();
+			}
 
 		}else if(ui->volViewBtn->isChecked()){
 			
@@ -953,9 +996,6 @@ void MainWindow::coronalBtnClicked(bool value)
 	ui->coronalViewBtn->setChecked(true);
 
 	if(value){
-
-		//uncheck buttons
-		ui->rotCenterBtn->setChecked(false);
 
 		//change the view when only one view is active 
 		if(ui->displayOneBtn->isChecked()){
@@ -995,8 +1035,19 @@ void MainWindow::coronalBtnClicked(bool value)
 				ui->sliceSld->setValue(sliceCoronal);
 			}
 
-			//remove observer
-			imageStyleSagital->RemoveAllObservers();
+			//uncheck buttons and return view to normal
+			if(ui->rotCenterBtn->isChecked()){
+				ui->rotCenterBtn->setChecked(false);
+				imageStyleSagital->RemoveAllObservers();
+			}
+
+			if(ui->segmentBtn->isChecked()){
+				ui->segmentBtn->setChecked(false);
+				segmentationStyleSagital->clearTracer();
+				viewerSagital->GetRenderer()->AddActor(sagitalCenterRefActor);
+				viewerSagital->GetRenderWindow()->GetInteractor()->SetInteractorStyle(imageStyleSagital);
+				viewerSagital->Render();
+			}
 
 		}else if(ui->axialViewBtn->isChecked()){
 
@@ -1016,8 +1067,19 @@ void MainWindow::coronalBtnClicked(bool value)
 				ui->sliceSld->setValue(sliceCoronal);
 			}
 
-			//remove observer
-			imageStyleAxial->RemoveAllObservers();
+			//uncheck buttons and return view to normal
+			if(ui->rotCenterBtn->isChecked()){
+				ui->rotCenterBtn->setChecked(false);
+				imageStyleAxial->RemoveAllObservers();
+			}
+
+			if(ui->segmentBtn->isChecked()){
+				ui->segmentBtn->setChecked(false);
+				segmentationStyleAxial->clearTracer();
+				viewerAxial->GetRenderer()->AddActor(axialCenterRefActor);
+				viewerAxial->GetRenderWindow()->GetInteractor()->SetInteractorStyle(imageStyleAxial);
+				viewerAxial->Render();
+			}
 
 		}else if(ui->volViewBtn->isChecked()){
 			
@@ -1170,5 +1232,76 @@ void MainWindow::rotCenterBtnClicked(bool value)
 
 void MainWindow::segmentBtnClicked(bool value)
 {	
+	if(value){
+	
+		if(ui->sagitalViewBtn->isChecked()){
+			
+			//initialize segmentation interactor style in selected view
+			segmentationStyleSagital = vtkSmartPointer< vtkTracerInteractorStyle<QVTKWidget> >::New();
+			segmentationStyleSagital->setCallerWidget(sagitalWidget);
+			viewerSagital->GetRenderWindow()->GetInteractor()->SetInteractorStyle(segmentationStyleSagital);
+			segmentationStyleSagital->initTracer(imageActorSagital);
+			segmentationStyleSagital->setAutoCloseOn();
 
+			//set style in selected view
+			viewerSagital->GetRenderer()->RemoveActor(sagitalCenterRefActor);
+			viewerSagital->Render();
+
+		}else if(ui->axialViewBtn->isChecked()){
+			
+			//initialize segmentation interactor style in selected view
+			segmentationStyleAxial = vtkSmartPointer< vtkTracerInteractorStyle<QVTKWidget> >::New();
+			segmentationStyleAxial->setCallerWidget(axialWidget);
+			viewerAxial->GetRenderWindow()->GetInteractor()->SetInteractorStyle(segmentationStyleAxial);
+			segmentationStyleAxial->initTracer(imageActorAxial);
+			segmentationStyleAxial->setAutoCloseOn();
+
+			//set style in selected view
+			viewerAxial->GetRenderer()->RemoveActor(axialCenterRefActor);
+			viewerAxial->Render();
+
+		}else if(ui->coronalViewBtn->isChecked()){
+			
+			//initialize segmentation interactor style in selected view
+			segmentationStyleCoronal = vtkSmartPointer< vtkTracerInteractorStyle<QVTKWidget> >::New();
+			segmentationStyleCoronal->setCallerWidget(coronalWidget);
+			viewerCoronal->GetRenderWindow()->GetInteractor()->SetInteractorStyle(segmentationStyleCoronal);
+			segmentationStyleCoronal->initTracer(imageActorCoronal);
+			segmentationStyleCoronal->setAutoCloseOn();
+
+			//set style in selected view
+			viewerCoronal->GetRenderer()->RemoveActor(coronalCenterRefActor);
+			viewerCoronal->Render();
+
+		}
+
+	}else{
+
+		if(ui->sagitalViewBtn->isChecked()){
+
+			//removing segmentation interactor style from selected view 
+			segmentationStyleSagital->clearTracer();
+			viewerSagital->GetRenderer()->AddActor(sagitalCenterRefActor);
+			viewerSagital->GetRenderWindow()->GetInteractor()->SetInteractorStyle(imageStyleSagital);
+			viewerSagital->Render();
+
+		}else if(ui->axialViewBtn->isChecked()){
+
+			//removing segmentation interactor style from selected view 
+			segmentationStyleAxial->clearTracer();
+			viewerAxial->GetRenderer()->AddActor(axialCenterRefActor);
+			viewerAxial->GetRenderWindow()->GetInteractor()->SetInteractorStyle(imageStyleAxial);
+			viewerAxial->Render();
+
+		}else if(ui->coronalViewBtn->isChecked()){
+
+			//removing segmentation interactor style from selected view 
+			segmentationStyleCoronal->clearTracer();
+			viewerCoronal->GetRenderer()->AddActor(coronalCenterRefActor);
+			viewerCoronal->GetRenderWindow()->GetInteractor()->SetInteractorStyle(imageStyleCoronal);
+			viewerCoronal->Render();
+
+		}
+
+	}
 }

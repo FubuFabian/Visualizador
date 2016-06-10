@@ -26,6 +26,7 @@
 #include <vtkPropPicker.h>
 
 #include "QVTKImageWidgetCommand.h"
+#include "vtkTracerInteractorStyle.h"
 
 namespace Ui {
 class MainWindow;
@@ -48,6 +49,8 @@ public:
 	Set the new rotation center in the selected view
 	**/
 	void setNewRotationCenter(double,double);
+
+	void setSegmentedPath(vtkSmartPointer<vtkPolyData>);
     
 private:
     Ui::MainWindow *ui;
@@ -193,6 +196,11 @@ private:
 	vtkSmartPointer<vtkInteractorStyleImage> imageStyleSagital;
 
 	/**
+	Interactor style of the Sagital viewer, it has the segmentation interaction for a 2D image
+	**/
+	vtkSmartPointer< vtkTracerInteractorStyle<QVTKWidget> > segmentationStyleSagital;
+
+	/**
 	Sagital Slice reference in the axial view
 	**/
 	vtkSmartPointer<vtkLineSource> sagitalRefInAxialView;
@@ -303,6 +311,11 @@ private:
 	vtkSmartPointer<vtkInteractorStyleImage> imageStyleAxial;
 
 	/**
+	Interactor style of the Axial viewer, it has the segmentation interaction for a 2D image
+	**/
+	vtkSmartPointer< vtkTracerInteractorStyle<QVTKWidget> > segmentationStyleAxial;
+
+	/**
 	Axial Slice reference in the sagital view
 	**/
 	vtkSmartPointer<vtkLineSource> axialRefInSagitalView;
@@ -411,6 +424,11 @@ private:
 	Interactor style of the coronal viewer, it has the basic interaction with a 2D image
 	**/
 	vtkSmartPointer<vtkInteractorStyleImage> imageStyleCoronal;
+
+	/**
+	Interactor style of the Coronal viewer, it has the segmentation interaction for a 2D image
+	**/
+	vtkSmartPointer< vtkTracerInteractorStyle<QVTKWidget> > segmentationStyleCoronal;
 
 	/**
 	Coronal Slice reference in the sagital view
