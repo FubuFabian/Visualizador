@@ -29,9 +29,9 @@ INCLUDE_DIRECTORIES(
   ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-SET(AppSrcs main.cpp mainwindow.cpp QVTKImageWidgetCommand.cpp vtkTracerInteractorStyle.cpp)
+SET(AppSrcs main.cpp mainwindow.cpp QVTKImageWidgetCommand.cpp vtkTracerInteractorStyle.cpp OpenVol.cpp)
 
-SET(AppHeaders mainwindow.h QVTKImageWidgetCommand.h vtkTracerInteractorStyle.h)
+SET(AppHeaders mainwindow.h QVTKImageWidgetCommand.h vtkTracerInteractorStyle.h OpenVol.h)
 
 SET(AppUI mainwindow.ui)
 

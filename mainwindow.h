@@ -533,6 +533,11 @@ private slots:
     void openMHD();
 
 	/**
+    Set a volume filename and open in format VOL
+    **/
+    void openVol();
+
+	/**
     Select sagital View
     **/
 	void sagitalBtnClicked(bool);

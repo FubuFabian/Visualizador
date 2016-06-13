@@ -265,6 +265,7 @@
     <property name="title">
      <string>Open</string>
     </property>
+    <addaction name="actionVOL"/>
     <addaction name="actionMHD"/>
    </widget>
    <addaction name="menuOpen"/>
@@ -281,6 +282,11 @@
   <action name="actionMHD">
    <property name="text">
     <string>MHD</string>
+   </property>
+  </action>
+  <action name="actionVOL">
+   <property name="text">
+    <string>VOL</string>
    </property>
   </action>
  </widget>
@@ -375,7 +381,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>1012</x>
-     <y>117</y>
+     <y>237</y>
     </hint>
     <hint type="destinationlabel">
      <x>544</x>
@@ -391,7 +397,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>1060</x>
-     <y>117</y>
+     <y>237</y>
     </hint>
     <hint type="destinationlabel">
      <x>590</x>
@@ -407,7 +413,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>1012</x>
-     <y>152</y>
+     <y>272</y>
     </hint>
     <hint type="destinationlabel">
      <x>544</x>
@@ -423,7 +429,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>1060</x>
-     <y>152</y>
+     <y>272</y>
     </hint>
     <hint type="destinationlabel">
      <x>1073</x>
@@ -470,8 +476,8 @@
    <slot>rotCenterBtnClicked(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1034</x>
-     <y>169</y>
+     <x>1073</x>
+     <y>429</y>
     </hint>
     <hint type="destinationlabel">
      <x>1080</x>
@@ -486,12 +492,28 @@
    <slot>segmentBtnClicked(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>1066</x>
-     <y>207</y>
+     <x>1073</x>
+     <y>464</y>
     </hint>
     <hint type="destinationlabel">
      <x>1082</x>
      <y>216</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>actionVOL</sender>
+   <signal>triggered()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>openVol()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>-1</x>
+     <y>-1</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>543</x>
+     <y>344</y>
     </hint>
    </hints>
   </connection>
@@ -510,5 +532,6 @@
   <slot>oneBtnClicked(bool)</slot>
   <slot>rotCenterBtnClicked(bool)</slot>
   <slot>segmentBtnClicked(bool)</slot>
+  <slot>openVol()</slot>
  </slots>
 </ui>

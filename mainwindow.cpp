@@ -1,6 +1,8 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
+#include "OpenVol.h"
+
 #include <QVBoxLayout>
 
 #include <vtkMetaImageReader.h>
@@ -570,6 +572,24 @@ void MainWindow::openMHD()
 	setSlicesData();
 }
 
+void MainWindow::openVol()
+{
+	std::cout<<"Loading Volume"<<std::endl;
+
+	//initializing reader
+    this->volumeFilename = QFileDialog::getOpenFileName(this, tr("Open Volume .vol"),
+        QDir::currentPath(), tr("Volume Files (*.vol)"));
+    
+	OpenVol * reader = OpenVol::New();
+    reader->setFilename(volumeFilename);
+	reader->update();
+
+	//displaying volume
+	//displayVol();
+	//setRenderingData();
+	//setSlicesData();
+}
+
 void MainWindow::reslice(int slice)
 {
 	if(ui->sagitalViewBtn->isChecked()){
@@ -832,7 +852,6 @@ void MainWindow::sagitalBtnClicked(bool value)
 			if(ui->segmentBtn->isChecked()){
 				ui->segmentBtn->setChecked(false);
 				segmentationStyleAxial->clearTracer();
-				viewerAxial->GetRenderer()->AddActor(axialCenterRefActor);
 				viewerAxial->GetRenderWindow()->GetInteractor()->SetInteractorStyle(imageStyleAxial);
 				viewerAxial->Render();
 			}
@@ -864,7 +883,6 @@ void MainWindow::sagitalBtnClicked(bool value)
 			if(ui->segmentBtn->isChecked()){
 				ui->segmentBtn->setChecked(false);
 				segmentationStyleCoronal->clearTracer();
-				viewerCoronal->GetRenderer()->AddActor(coronalCenterRefActor);
 				viewerCoronal->GetRenderWindow()->GetInteractor()->SetInteractorStyle(imageStyleCoronal);
 				viewerCoronal->Render();
 			}
@@ -938,7 +956,6 @@ void MainWindow::axialBtnClicked(bool value)
 			if(ui->segmentBtn->isChecked()){
 				ui->segmentBtn->setChecked(false);
 				segmentationStyleSagital->clearTracer();
-				viewerSagital->GetRenderer()->AddActor(sagitalCenterRefActor);
 				viewerSagital->GetRenderWindow()->GetInteractor()->SetInteractorStyle(imageStyleSagital);
 				viewerSagital->Render();
 			}
@@ -970,7 +987,6 @@ void MainWindow::axialBtnClicked(bool value)
 			if(ui->segmentBtn->isChecked()){
 				ui->segmentBtn->setChecked(false);
 				segmentationStyleCoronal->clearTracer();
-				viewerCoronal->GetRenderer()->AddActor(coronalCenterRefActor);
 				viewerCoronal->GetRenderWindow()->GetInteractor()->SetInteractorStyle(imageStyleCoronal);
 				viewerCoronal->Render();
 			}
@@ -1044,7 +1060,6 @@ void MainWindow::coronalBtnClicked(bool value)
 			if(ui->segmentBtn->isChecked()){
 				ui->segmentBtn->setChecked(false);
 				segmentationStyleSagital->clearTracer();
-				viewerSagital->GetRenderer()->AddActor(sagitalCenterRefActor);
 				viewerSagital->GetRenderWindow()->GetInteractor()->SetInteractorStyle(imageStyleSagital);
 				viewerSagital->Render();
 			}
@@ -1076,7 +1091,6 @@ void MainWindow::coronalBtnClicked(bool value)
 			if(ui->segmentBtn->isChecked()){
 				ui->segmentBtn->setChecked(false);
 				segmentationStyleAxial->clearTracer();
-				viewerAxial->GetRenderer()->AddActor(axialCenterRefActor);
 				viewerAxial->GetRenderWindow()->GetInteractor()->SetInteractorStyle(imageStyleAxial);
 				viewerAxial->Render();
 			}
