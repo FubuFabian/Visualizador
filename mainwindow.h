@@ -501,6 +501,16 @@ private:
 	void configSagitalView();
 
 	/**
+	Add the actors for sagital view reference
+	**/
+	void addActorsSagitalView();
+
+	/**
+	Remove the actors for sagital view reference
+	**/
+	void removeActorsSagitalView();
+
+	/**
 	Display the slice sagital image
 	**/
 	void displaySagital();
@@ -511,6 +521,16 @@ private:
 	void configAxialView();
 
 	/**
+	Add the actors for axial view reference
+	**/
+	void addActorsAxialView();
+
+	/**
+	Remove the actors for axial view reference
+	**/
+	void removeActorsAxialView();
+
+	/**
 	Display the slice axial image
 	**/
 	void displayAxial();
@@ -519,6 +539,16 @@ private:
 	Configuration of coronal view
 	**/
 	void configCoronalView();
+
+	/**
+	Add the actors for coronal view reference
+	**/
+	void addActorsCoronalView();
+
+	/**
+	Remove the actors for coronal view reference
+	**/
+	void removeActorsCoronalView();
 
 	/**
 	Display the slice coronal image
