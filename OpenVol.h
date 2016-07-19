@@ -9,6 +9,9 @@
 #include <string>
 #include <QString>
 
+#include <vtkSmartPointer.h>
+#include <vtkImageData.h> 
+
 using namespace std;
 
 
@@ -30,12 +33,17 @@ public:
 	/*
 	set volume filename
 	*/
-	void setFilename(QString);
+	void SetFilename(QString);
 
 	/*
-	read the volume
+	read the volume data
 	*/
-	void update();
+	void Update();
+
+	/*
+	reaturn the vtk volume
+	*/
+	vtkSmartPointer<vtkImageData> GetOutput();
 
 private:
 
@@ -73,5 +81,35 @@ private:
 	General electric ms
 	*/
 	std::string gems;
+
+	/*
+	X size
+	*/
+	int x;
+
+	/*
+	Y size
+	*/
+	int y;
+
+	/*
+	Z size
+	*/
+	int z;
+
+	/*
+	Voxel size
+	*/
+	double voxSize;
+
+	/*
+	Volume size
+	*/
+	int volSize;
+
+	/*
+	The output volume
+	*/
+	vtkSmartPointer<vtkImageData> volume;
 
 };

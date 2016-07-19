@@ -596,6 +596,16 @@ private slots:
     Rotate slice through z in selected view 
     **/
 	void rotateZ(int);
+
+	/**
+	Reset selected slice transformation
+	**/
+	void resetSlice();
+
+	/**
+	Reset all slices transformations
+	**/
+	void resetAll();
 };
 
 #endif // MAINWINDOW_H

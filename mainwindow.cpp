@@ -11,6 +11,7 @@
 #include <vtkColorTransferFunction.h>
 #include <vtkCamera.h>
 #include <vtkProperty.h>
+#include <vtkImageFlip.h>
 
 #include <vnl/vnl_matrix.h>
 
@@ -259,7 +260,7 @@ void MainWindow::setSlicesData()
 	configAxialView();
 	configCoronalView();
 
-	//setting sagital initial values for sliders
+	//setting initial values for sliders
 	ui->rotXSld->setRange(-90,90);
 	ui->rotXSld->setTickInterval(1);
 	ui->rotXSld->setValue(0);
@@ -272,12 +273,12 @@ void MainWindow::setSlicesData()
 	ui->rotZSld->setTickInterval(1);
 	ui->rotZSld->setValue(0);
 
-	ui->sliceSld->setRange(0,dimensions[0]-1);
+	ui->sliceSld->setRange(0,dimensions[2]-1);
 	ui->sliceSld->setTickInterval(1);
-	ui->sliceSld->setValue(centerSlice[0]);
+	ui->sliceSld->setValue(centerSlice[2]);
 
 	//displaying 2D views
-	displayAxial();
+	displaySagital();
 	displayCoronal();
 }
 
@@ -288,6 +289,10 @@ void MainWindow::configSagitalView()
 	angleXSagital = 0;
 	angleYSagital = 0;
 	angleZSagital = 0; 
+	
+	//initializing rotation center
+	rotCenterSagital[0] = positionCenter[1]-origin[1];
+	rotCenterSagital[1] = positionCenter[2]-origin[2];
 
 	//initializing slicer data
 	resliceAxesSagital = vtkSmartPointer<vtkMatrix4x4>::New();
@@ -336,12 +341,7 @@ void MainWindow::configSagitalView()
 	sagitalRefInCoronalViewActor->GetProperty()->SetLineWidth(1);
 	sagitalRefInCoronalViewActor->GetProperty()->SetColor(0,162,232);
 
-	viewerAxial->GetRenderer()->AddActor(sagitalRefInAxialViewActor);
 	viewerCoronal->GetRenderer()->AddActor(sagitalRefInCoronalViewActor);
-
-	//initializing rotation center
-	rotCenterSagital[0] = positionCenter[1]-origin[1];
-	rotCenterSagital[1] = positionCenter[2]-origin[2];
 
 	//seting visual reference for rotation center
 	sagitalCenterRef = vtkSmartPointer<vtkRegularPolygonSource>::New();
@@ -355,9 +355,6 @@ void MainWindow::configSagitalView()
 	sagitalCenterRefMapper->SetInputConnection(sagitalCenterRef->GetOutputPort());;
 	sagitalCenterRefActor->SetMapper(sagitalCenterRefMapper);
 	sagitalCenterRefActor->GetProperty()->SetColor(1.0,0.59,0.08);
-
-	viewerSagital->GetRenderer()->AddActor(sagitalCenterRefActor);
-
 }
 
 void MainWindow::configAxialView()
@@ -368,6 +365,10 @@ void MainWindow::configAxialView()
 	angleYAxial = 0;
 	angleZAxial = 0; 
 
+	//initializing rotation center
+	rotCenterAxial[0] = positionCenter[0]-origin[0];
+	rotCenterAxial[1] = positionCenter[1]-origin[1];
+
 	//initializing slicer data
 	resliceAxesAxial = vtkSmartPointer<vtkMatrix4x4>::New();
 	reslicerAxial = vtkSmartPointer<vtkImageReslice>::New();
@@ -375,6 +376,10 @@ void MainWindow::configAxialView()
 
 	transformAxial->PostMultiply();
 	transformAxial->Translate(origin[0],origin[1],positionCenter[2]);
+
+	//transformAxial->Translate(-(rotCenterAxial[0]),-(rotCenterAxial[1]),-(sliceAxial*spacing[2]));
+	//transformAxial->RotateZ(180);
+	//transformAxial->Translate((rotCenterAxial[0]),(rotCenterAxial[1]),(sliceAxial*spacing[2]));
 
 	resliceAxesAxial->DeepCopy(axialElements);
 
@@ -415,11 +420,8 @@ void MainWindow::configAxialView()
 	axialRefInCoronalViewActor->GetProperty()->SetLineWidth(1);
 	axialRefInCoronalViewActor->GetProperty()->SetColor(237,0,0);
 
+	viewerSagital->GetRenderer()->AddActor(axialRefInSagitalViewActor);
 	viewerCoronal->GetRenderer()->AddActor(axialRefInCoronalViewActor);
-
-	//initializing rotation center
-	rotCenterAxial[0] = positionCenter[0]-origin[0];
-	rotCenterAxial[1] = positionCenter[1]-origin[1];
 
 	//seting visual reference for rotation center
 	axialCenterRef = vtkSmartPointer<vtkRegularPolygonSource>::New();
@@ -433,6 +435,8 @@ void MainWindow::configAxialView()
 	axialCenterRefMapper->SetInputConnection(axialCenterRef->GetOutputPort());;
 	axialCenterRefActor->SetMapper(axialCenterRefMapper);
 	axialCenterRefActor->GetProperty()->SetColor(1.0,0.59,0.08);
+
+	viewerAxial->GetRenderer()->AddActor(axialCenterRefActor);
 }
 
 void MainWindow::configCoronalView()
@@ -442,6 +446,10 @@ void MainWindow::configCoronalView()
 	angleXCoronal = 0;
 	angleYCoronal = 0;
 	angleZCoronal = 0; 
+
+	//initializing rotation center
+	rotCenterCoronal[0] = positionCenter[0]-origin[0];
+	rotCenterCoronal[1] = positionCenter[2]-origin[2];
 
 	//initializing slicer data
 	resliceAxesCoronal = vtkSmartPointer<vtkMatrix4x4>::New();
@@ -490,11 +498,7 @@ void MainWindow::configCoronalView()
 	coronalRefInAxialViewActor->GetProperty()->SetLineWidth(1);
 	coronalRefInAxialViewActor->GetProperty()->SetColor(237,128,0);
 
-	viewerAxial->GetRenderer()->AddActor(coronalRefInAxialViewActor);
-
-	//initializing rotation center
-	rotCenterCoronal[0] = positionCenter[0]-origin[0];
-	rotCenterCoronal[1] = positionCenter[2]-origin[2];
+	viewerSagital->GetRenderer()->AddActor(coronalRefInSagitalViewActor);
 
 	//seting visual reference for rotation center
 	coronalCenterRef = vtkSmartPointer<vtkRegularPolygonSource>::New();
@@ -581,13 +585,25 @@ void MainWindow::openVol()
         QDir::currentPath(), tr("Volume Files (*.vol)"));
     
 	OpenVol * reader = OpenVol::New();
-    reader->setFilename(volumeFilename);
-	reader->update();
+    reader->SetFilename(volumeFilename);
+	reader->Update();
+
+	vtkSmartPointer<vtkImageFlip> volFlipY = vtkSmartPointer<vtkImageFlip>::New();
+	volFlipY->SetInput(reader->GetOutput());
+	volFlipY->SetFilteredAxis(1);
+	volFlipY->Update();
+
+	//vtkSmartPointer<vtkImageFlip> volFlipX = vtkSmartPointer<vtkImageFlip>::New();
+	//volFlipX->SetInput(volFlipY->GetOutput());
+	//volFlipX->SetFilteredAxis(2);
+	//volFlipX->Update();
+
+	volumeData = volFlipY->GetOutput();
 
 	//displaying volume
-	//displayVol();
-	//setRenderingData();
-	//setSlicesData();
+	displayVol();
+	setRenderingData();
+	setSlicesData();
 }
 
 void MainWindow::reslice(int slice)
@@ -1318,4 +1334,70 @@ void MainWindow::segmentBtnClicked(bool value)
 		}
 
 	}
+}
+
+void MainWindow::resetSlice()
+{
+	if(ui->sagitalViewBtn->isChecked()){
+		
+		std::cout<<"Reset Sagital View to center slice"<<std::endl;
+
+		viewerAxial->GetRenderer()->RemoveActor(sagitalRefInAxialViewActor);
+		viewerCoronal->GetRenderer()->RemoveActor(sagitalRefInCoronalViewActor);
+		viewerSagital->GetRenderer()->RemoveActor(sagitalCenterRefActor);
+
+		configSagitalView();
+
+		viewerAxial->GetRenderer()->AddActor(sagitalRefInAxialViewActor);
+		viewerCoronal->GetRenderer()->AddActor(sagitalRefInCoronalViewActor);
+		viewerSagital->GetRenderer()->AddActor(sagitalCenterRefActor);
+
+		//setting initial values for sliders
+		ui->rotXSld->setValue(0);;
+		ui->rotYSld->setValue(0);
+		ui->rotZSld->setValue(0);
+		ui->sliceSld->setValue(centerSlice[0]);
+
+	}else if(ui->axialViewBtn->isChecked()){
+			
+		std::cout<<"Reset Axial View to center slice"<<std::endl;
+
+		viewerSagital->GetRenderer()->RemoveActor(axialRefInSagitalViewActor);
+		viewerCoronal->GetRenderer()->RemoveActor(axialRefInCoronalViewActor);
+		viewerAxial->GetRenderer()->RemoveActor(axialCenterRefActor);
+
+		configAxialView();
+
+		//setting initial values for sliders
+		ui->rotXSld->setValue(0);
+		ui->rotYSld->setValue(0);
+		ui->rotZSld->setValue(0);
+		ui->sliceSld->setValue(centerSlice[2]);
+
+	}else if(ui->coronalViewBtn->isChecked()){
+
+		std::cout<<"Reset Coronal View to center slice"<<std::endl;
+
+		viewerSagital->GetRenderer()->RemoveActor(coronalRefInSagitalViewActor);
+		viewerAxial->GetRenderer()->RemoveActor(coronalRefInAxialViewActor);
+		viewerCoronal->GetRenderer()->RemoveActor(coronalCenterRefActor);
+
+		configCoronalView();
+
+		viewerSagital->GetRenderer()->AddActor(coronalRefInSagitalViewActor);
+		viewerAxial->GetRenderer()->AddActor(coronalRefInAxialViewActor);
+		viewerCoronal->GetRenderer()->AddActor(coronalCenterRefActor);
+
+		//setting initial values for sliders
+		ui->rotXSld->setValue(0);
+		ui->rotYSld->setValue(0);
+		ui->rotZSld->setValue(0);
+		ui->sliceSld->setValue(centerSlice[1]);
+
+	}
+}
+
+void MainWindow::resetAll()
+{
+
 }
