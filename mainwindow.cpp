@@ -23,6 +23,7 @@
 #include <vtkMetaImageWriter.h>
 
 #include <vnl/vnl_matrix.h>
+#include <vnl/vnl_vector.h>
 
 const double MainWindow::axialElements[16] = {    
 1, 0, 0, 0,
@@ -159,21 +160,23 @@ void MainWindow::setSegmentedPath(vtkSmartPointer<vtkPolyData> anotation)
 		ui->saveSegBtn->setEnabled(true);
 	}
 
-	vtkSmartPointer<vtkPolyData> segmentation;
 	vtkSmartPointer<vtkImageData> segmentedSlice;
+	vtkSmartPointer<vtkTransform> transform;
 	vtkSmartPointer<vtkPolyDataToImageStencil> dataToStencil = vtkSmartPointer<vtkPolyDataToImageStencil>::New();
-	vtkSmartPointer<vtkImageStencilData> stencilImage = dataToStencil->GetOutput();
 	vtkSmartPointer<vtkImageStencilToImage> stencilToImageFilter = vtkSmartPointer<vtkImageStencilToImage>::New();
 
 	if(ui->sagitalViewBtn->isChecked()){	
 		segmentedSlice = reslicerSagital->GetOutput();
+		transform = transformSagital;
 	}else if(ui->axialViewBtn->isChecked()){
 		segmentedSlice = reslicerAxial->GetOutput();
+		transform = transformAxial;
 	}else if(ui->coronalViewBtn->isChecked()){
-		segmentedSlice = reslicerAxial->GetOutput();
+		segmentedSlice = reslicerCoronal->GetOutput();
+		transform = transformCoronal;
 	}
 
-	dataToStencil->SetInput(segmentation);
+	dataToStencil->SetInput(anotation);
 	dataToStencil->SetOutputSpacing(segmentedSlice->GetSpacing());
 	dataToStencil->SetOutputOrigin(volumeData->GetOrigin());
 	dataToStencil->SetOutputWholeExtent(segmentedSlice->GetWholeExtent());
@@ -184,6 +187,37 @@ void MainWindow::setSegmentedPath(vtkSmartPointer<vtkPolyData> anotation)
 	stencilToImageFilter->SetInsideValue(255);
 	stencilToImageFilter->SetOutputScalarTypeToUnsignedChar();
 	stencilToImageFilter->Update();
+
+	vtkSmartPointer<vtkImageData> stencilImage = stencilToImageFilter->GetOutput();
+
+	
+
+	int * imageSize = stencilImage->GetDimensions();
+
+	for(int x = 0; x<imageSize[0]; x++){
+            for(int y = 0; y<imageSize[1]; y++){
+
+				const float point[3] = {x,y,0};
+				float transformedPoint[3];
+				transform->TransformPoint(point,transformedPoint);
+
+				int voxel[3];
+                voxel[0] = vtkMath::Floor(transformedPoint[0]);
+                voxel[1] = vtkMath::Floor(transformedPoint[1]);
+                voxel[2] = vtkMath::Floor(transformedPoint[2]);
+
+				unsigned char * imagePixel = static_cast<unsigned char *> (
+                            stencilImage->GetScalarPointer(x,y,0));
+				unsigned char * volumeVoxel = static_cast<unsigned char *> (
+                            segmentedImage->GetScalarPointer(voxel[0],voxel[1],voxel[2]));
+
+				if(imagePixel[0]==255)
+					volumeVoxel[0] = 255;
+
+			}
+	}
+
+
 
 	/*vtkSmartPointer<vtkTransformPolyDataFilter> transformSegmentation = vtkSmartPointer<vtkTransformPolyDataFilter>::New();
 	transformSegmentation->SetInput(anotation);
@@ -216,9 +250,9 @@ void MainWindow::setSegmentedPath(vtkSmartPointer<vtkPolyData> anotation)
 	stencilToImageFilter->Update();*/
 
 	vtkSmartPointer<vtkMetaImageWriter> writer = vtkSmartPointer<vtkMetaImageWriter>::New();
-	writer->SetFileName("C:/Users/Fubu/Desktop/slice.mhd");
-	writer->SetRAWFileName("C:/Users/Fubu/Desktop/slice.raw");
-	writer->SetInput(stencilToImageFilter->GetOutput());
+	writer->SetFileName("C:/Users/Fabian/Desktop/slice.mhd");
+	writer->SetRAWFileName("C:/Users/Fabian/Desktop/slice.raw");
+	writer->SetInput(segmentedImage);
 
 	try{
 	writer->Write();
