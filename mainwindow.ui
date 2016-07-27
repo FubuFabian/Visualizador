@@ -199,6 +199,16 @@
           </property>
          </widget>
         </item>
+        <item>
+         <widget class="QPushButton" name="saveSegBtn">
+          <property name="enabled">
+           <bool>false</bool>
+          </property>
+          <property name="text">
+           <string>Save Seg</string>
+          </property>
+         </widget>
+        </item>
        </layout>
       </item>
       <item>
@@ -399,7 +409,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>891</x>
-     <y>175</y>
+     <y>165</y>
     </hint>
     <hint type="destinationlabel">
      <x>544</x>
@@ -415,7 +425,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>850</x>
-     <y>175</y>
+     <y>165</y>
     </hint>
     <hint type="destinationlabel">
      <x>590</x>
@@ -431,7 +441,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>850</x>
-     <y>204</y>
+     <y>194</y>
     </hint>
     <hint type="destinationlabel">
      <x>544</x>
@@ -447,7 +457,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>891</x>
-     <y>204</y>
+     <y>194</y>
     </hint>
     <hint type="destinationlabel">
      <x>1073</x>
@@ -495,7 +505,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>897</x>
-     <y>372</y>
+     <y>353</y>
     </hint>
     <hint type="destinationlabel">
      <x>1080</x>
@@ -511,7 +521,7 @@
    <hints>
     <hint type="sourcelabel">
      <x>897</x>
-     <y>401</y>
+     <y>382</y>
     </hint>
     <hint type="destinationlabel">
      <x>1082</x>
@@ -542,8 +552,8 @@
    <slot>resetSlice()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>883</x>
-     <y>233</y>
+     <x>897</x>
+     <y>225</y>
     </hint>
     <hint type="destinationlabel">
      <x>882</x>
@@ -558,12 +568,28 @@
    <slot>resetAll()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>873</x>
-     <y>258</y>
+     <x>897</x>
+     <y>254</y>
     </hint>
     <hint type="destinationlabel">
      <x>869</x>
      <y>282</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>saveSegBtn</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>saveSeg()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>876</x>
+     <y>401</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>880</x>
+     <y>442</y>
     </hint>
    </hints>
   </connection>
@@ -585,5 +611,6 @@
   <slot>openVol()</slot>
   <slot>resetSlice()</slot>
   <slot>resetAll()</slot>
+  <slot>saveSeg()</slot>
  </slots>
 </ui>

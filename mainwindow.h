@@ -481,6 +481,16 @@ private:
 	double rotCenterCoronal[2];
 
 	/**
+	Segmented image
+	**/
+	vtkSmartPointer<vtkImageData> segmentedImage;
+
+	/**
+	Segmentation Flag
+	**/
+	bool segmented;
+
+	/**
 	Display the volume in volWidget
 	**/
 	void displayVol();
@@ -636,6 +646,11 @@ private slots:
 	Reset all slices transformations
 	**/
 	void resetAll();
+
+	/**
+	Save manual segmentation 
+	**/
+	void saveSeg();
 };
 
 #endif // MAINWINDOW_H

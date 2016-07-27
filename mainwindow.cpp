@@ -13,6 +13,15 @@
 #include <vtkProperty.h>
 #include <vtkImageFlip.h>
 
+#include <vtkTransformPolyDataFilter.h>
+#include <vtkPolyDataToImageStencil.h>
+#include <vtkImageStencilData.h>
+#include <vtkImageStencilToImage.h>
+#include <vtkImageMathematics.h>
+#include <vtkImageBlend.h>
+
+#include <vtkMetaImageWriter.h>
+
 #include <vnl/vnl_matrix.h>
 
 const double MainWindow::axialElements[16] = {    
@@ -143,9 +152,87 @@ void MainWindow::setNewRotationCenter(double x, double y)
 
 }
 
-void MainWindow::setSegmentedPath(vtkSmartPointer<vtkPolyData>)
+void MainWindow::setSegmentedPath(vtkSmartPointer<vtkPolyData> anotation)
 {
-	std::cout<<"segmento"<<std::endl;
+	if(!segmented){
+		segmented = true;
+		ui->saveSegBtn->setEnabled(true);
+	}
+
+	vtkSmartPointer<vtkPolyData> segmentation;
+	vtkSmartPointer<vtkImageData> segmentedSlice;
+	vtkSmartPointer<vtkPolyDataToImageStencil> dataToStencil = vtkSmartPointer<vtkPolyDataToImageStencil>::New();
+	vtkSmartPointer<vtkImageStencilData> stencilImage = dataToStencil->GetOutput();
+	vtkSmartPointer<vtkImageStencilToImage> stencilToImageFilter = vtkSmartPointer<vtkImageStencilToImage>::New();
+
+	if(ui->sagitalViewBtn->isChecked()){	
+		segmentedSlice = reslicerSagital->GetOutput();
+	}else if(ui->axialViewBtn->isChecked()){
+		segmentedSlice = reslicerAxial->GetOutput();
+	}else if(ui->coronalViewBtn->isChecked()){
+		segmentedSlice = reslicerAxial->GetOutput();
+	}
+
+	dataToStencil->SetInput(segmentation);
+	dataToStencil->SetOutputSpacing(segmentedSlice->GetSpacing());
+	dataToStencil->SetOutputOrigin(volumeData->GetOrigin());
+	dataToStencil->SetOutputWholeExtent(segmentedSlice->GetWholeExtent());
+	dataToStencil->Update();
+
+	stencilToImageFilter->SetInput(dataToStencil->GetOutput());
+	stencilToImageFilter->SetOutsideValue(0);
+	stencilToImageFilter->SetInsideValue(255);
+	stencilToImageFilter->SetOutputScalarTypeToUnsignedChar();
+	stencilToImageFilter->Update();
+
+	/*vtkSmartPointer<vtkTransformPolyDataFilter> transformSegmentation = vtkSmartPointer<vtkTransformPolyDataFilter>::New();
+	transformSegmentation->SetInput(anotation);
+	
+	if(ui->sagitalViewBtn->isChecked()){
+		transformSegmentation->SetTransform(transformSagital);
+	}else if(ui->axialViewBtn->isChecked()){
+		transformSegmentation->SetTransform(transformAxial);
+	}else if(ui->coronalViewBtn->isChecked()){
+		transformSegmentation->SetTransform(transformCoronal);
+	}
+
+	transformSegmentation->Update();
+	segmentation = transformSegmentation->GetOutput();
+	
+	vtkSmartPointer<vtkPolyDataToImageStencil> dataToStencil = vtkSmartPointer<vtkPolyDataToImageStencil>::New();
+    dataToStencil->SetInput(segmentation);
+    dataToStencil->SetOutputSpacing(spacing);
+    dataToStencil->SetOutputOrigin(origin);
+	dataToStencil->SetOutputWholeExtent(volumeData->GetWholeExtent());
+    dataToStencil->Update();
+	
+	vtkSmartPointer<vtkImageStencilData> stencilImage = dataToStencil->GetOutput();
+
+	vtkSmartPointer<vtkImageStencilToImage> stencilToImageFilter = vtkSmartPointer<vtkImageStencilToImage>::New();
+	stencilToImageFilter->SetInput(dataToStencil->GetOutput());
+	stencilToImageFilter->SetOutsideValue(0);
+	stencilToImageFilter->SetInsideValue(255);
+	stencilToImageFilter->SetOutputScalarTypeToUnsignedChar();
+	stencilToImageFilter->Update();*/
+
+	vtkSmartPointer<vtkMetaImageWriter> writer = vtkSmartPointer<vtkMetaImageWriter>::New();
+	writer->SetFileName("C:/Users/Fubu/Desktop/slice.mhd");
+	writer->SetRAWFileName("C:/Users/Fubu/Desktop/slice.raw");
+	writer->SetInput(stencilToImageFilter->GetOutput());
+
+	try{
+	writer->Write();
+	}catch(std::exception& e){
+		std::cout<<e.what()<<std::endl;
+	}
+
+	vtkSmartPointer<vtkImageMathematics> max = vtkSmartPointer<vtkImageMathematics>::New();
+	max->SetOperationToMax();
+	max->SetInput1(stencilToImageFilter->GetOutput());
+	max->SetInput2(segmentedImage);
+	max->Update();
+
+	segmentedImage = max->GetOutput();
 }
 
 void MainWindow::displayVol()
@@ -235,6 +322,16 @@ void MainWindow::setRenderingData()
 	imageActorCoronal = viewerCoronal->GetImageActor();
 	imageActorCoronal->InterpolateOff();
 	viewerCoronal->GetRenderWindow()->GetInteractor()->SetInteractorStyle(imageStyleCoronal);
+
+	//initializing segmented image
+	segmentedImage = vtkSmartPointer<vtkImageData>::New();
+	segmentedImage->SetExtent(volumeData->GetExtent());
+	segmentedImage->SetSpacing(volumeData->GetSpacing());
+	segmentedImage->SetOrigin(volumeData->GetOrigin());
+	segmentedImage->SetScalarTypeToUnsignedChar();
+	segmentedImage->SetNumberOfScalarComponents(1);
+	segmentedImage->AllocateScalars();
+	segmented = false;
 }
 
 void MainWindow::setSlicesData()
@@ -1319,39 +1416,36 @@ void MainWindow::segmentBtnClicked(bool value)
 			//initialize segmentation interactor style in selected view
 			segmentationStyleSagital = vtkSmartPointer< vtkTracerInteractorStyle<QVTKWidget> >::New();
 			segmentationStyleSagital->setCallerWidget(sagitalWidget);
+			segmentationStyleSagital->setMainWindow(this);
 			viewerSagital->GetRenderWindow()->GetInteractor()->SetInteractorStyle(segmentationStyleSagital);
 			segmentationStyleSagital->initTracer(imageActorSagital);
 			segmentationStyleSagital->setAutoCloseOn();
 
-			//set style in selected view
 			viewerSagital->GetRenderer()->RemoveActor(sagitalCenterRefActor);
-			viewerSagital->Render();
 
 		}else if(ui->axialViewBtn->isChecked()){
 			
 			//initialize segmentation interactor style in selected view
 			segmentationStyleAxial = vtkSmartPointer< vtkTracerInteractorStyle<QVTKWidget> >::New();
 			segmentationStyleAxial->setCallerWidget(axialWidget);
+			segmentationStyleAxial->setMainWindow(this);
 			viewerAxial->GetRenderWindow()->GetInteractor()->SetInteractorStyle(segmentationStyleAxial);
 			segmentationStyleAxial->initTracer(imageActorAxial);
 			segmentationStyleAxial->setAutoCloseOn();
 
-			//set style in selected view
 			viewerAxial->GetRenderer()->RemoveActor(axialCenterRefActor);
-			viewerAxial->Render();
 
 		}else if(ui->coronalViewBtn->isChecked()){
 			
 			//initialize segmentation interactor style in selected view
 			segmentationStyleCoronal = vtkSmartPointer< vtkTracerInteractorStyle<QVTKWidget> >::New();
 			segmentationStyleCoronal->setCallerWidget(coronalWidget);
+			segmentationStyleCoronal->setMainWindow(this);
 			viewerCoronal->GetRenderWindow()->GetInteractor()->SetInteractorStyle(segmentationStyleCoronal);
 			segmentationStyleCoronal->initTracer(imageActorCoronal);
 			segmentationStyleCoronal->setAutoCloseOn();
 
-			//set style in selected view
 			viewerCoronal->GetRenderer()->RemoveActor(coronalCenterRefActor);
-			viewerCoronal->Render();
 
 		}
 
@@ -1363,7 +1457,6 @@ void MainWindow::segmentBtnClicked(bool value)
 			segmentationStyleSagital->clearTracer();
 			viewerSagital->GetRenderer()->AddActor(sagitalCenterRefActor);
 			viewerSagital->GetRenderWindow()->GetInteractor()->SetInteractorStyle(imageStyleSagital);
-			viewerSagital->Render();
 
 		}else if(ui->axialViewBtn->isChecked()){
 
@@ -1371,7 +1464,6 @@ void MainWindow::segmentBtnClicked(bool value)
 			segmentationStyleAxial->clearTracer();
 			viewerAxial->GetRenderer()->AddActor(axialCenterRefActor);
 			viewerAxial->GetRenderWindow()->GetInteractor()->SetInteractorStyle(imageStyleAxial);
-			viewerAxial->Render();
 
 		}else if(ui->coronalViewBtn->isChecked()){
 
@@ -1379,7 +1471,6 @@ void MainWindow::segmentBtnClicked(bool value)
 			segmentationStyleCoronal->clearTracer();
 			viewerCoronal->GetRenderer()->AddActor(coronalCenterRefActor);
 			viewerCoronal->GetRenderWindow()->GetInteractor()->SetInteractorStyle(imageStyleCoronal);
-			viewerCoronal->Render();
 
 		}
 
@@ -1492,5 +1583,50 @@ void MainWindow::resetAll()
 		displayAxial();
 		displaySagital();
 
+	}
+}
+
+void MainWindow::saveSeg()
+{
+	segmented = true;
+	ui->saveSegBtn->setEnabled(true);
+
+	vtkSmartPointer<vtkImageBlend> blend = vtkSmartPointer<vtkImageBlend>::New();
+	blend->SetInput(0,volumeData);
+	blend->SetInput(1,segmentedImage);
+	blend->SetOpacity(1,0.5);
+	blend->Update();
+
+	QString saveDirectory = QFileDialog::getSaveFileName(
+                this, tr("Choose File to Save Mask Volume"), QDir::currentPath());
+
+	QString saveMhdDirectory = saveDirectory;
+	QString saveRawDirectory = saveDirectory;
+
+    QString mhdFilename = ".mhd";
+	QString rawFilename = ".raw";
+
+    QString qtSaveMhdFile = saveMhdDirectory.append(mhdFilename);
+	QString qtSaveRawFile = saveRawDirectory.append(rawFilename);
+
+	std::string str1 = std::string(qtSaveMhdFile.toAscii().data());
+	const char * saveMhdFile = str1.c_str();
+
+	std::string str2 = std::string(qtSaveRawFile.toAscii().data());
+	const char * saveRawFile = str2.c_str();
+
+	std::cout<<"Saving Mask Volume in files:"<<std::endl<<std::endl;
+	std::cout<<saveMhdFile<<std::endl<<std::endl;
+	std::cout<<saveRawFile<<std::endl;
+
+	vtkSmartPointer<vtkMetaImageWriter> writer = vtkSmartPointer<vtkMetaImageWriter>::New();
+	writer->SetFileName(saveMhdFile);
+	writer->SetRAWFileName(saveRawFile);
+	writer->SetInput(blend->GetOutput());
+
+	try{
+	writer->Write();
+	}catch(std::exception& e){
+		std::cout<<e.what()<<std::endl;
 	}
 }
