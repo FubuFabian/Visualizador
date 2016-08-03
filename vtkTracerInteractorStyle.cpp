@@ -36,7 +36,6 @@ void vtkTracerInteractorStyle<Widget>::initTracer(vtkSmartPointer<vtkImageActor>
     
     tracer->ProjectToPlaneOn();
     tracer->SnapToImageOn();
-    
     tracer->On();
     
     

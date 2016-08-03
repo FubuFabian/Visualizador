@@ -158,7 +158,31 @@ void MainWindow::setSegmentedPath(vtkSmartPointer<vtkPolyData> anotation)
 	if(!segmented){
 		segmented = true;
 		ui->saveSegBtn->setEnabled(true);
-	}
+
+		//initializing segmented image
+		segmentedImage = vtkSmartPointer<vtkImageData>::New();
+		segmentedImage->SetExtent(volumeData->GetExtent());
+		segmentedImage->SetSpacing(volumeData->GetSpacing());
+		segmentedImage->SetOrigin(volumeData->GetOrigin());
+		segmentedImage->SetScalarTypeToUnsignedChar();
+		segmentedImage->SetNumberOfScalarComponents(1);
+		segmentedImage->AllocateScalars();
+
+		//unsigned char * segmentedImageVoxel;
+
+		//for(int i=0; i<dimensions[0]; i++){
+		//	for(int j=0; j<dimensions[1]; j++){
+		//		for(int k=0; k<dimensions[2]; k++){
+  //                  
+  //                  // get pointer to the current volume voxel   
+  //                  segmentedImageVoxel = static_cast<unsigned char *> (
+  //                          segmentedImage->GetScalarPointer(i,j,k));                   
+  //                  
+  //                  segmentedImageVoxel[0] = 0;                                    
+  //              }
+		//	}
+  //      }
+  	}
 
 	vtkSmartPointer<vtkImageData> segmentedSlice;
 	vtkSmartPointer<vtkTransform> transform;
@@ -190,21 +214,42 @@ void MainWindow::setSegmentedPath(vtkSmartPointer<vtkPolyData> anotation)
 
 	vtkSmartPointer<vtkImageData> stencilImage = stencilToImageFilter->GetOutput();
 
-	
+	int *imageSize = stencilImage->GetDimensions();
+	double *spacingImage = stencilImage->GetSpacing();
 
-	int * imageSize = stencilImage->GetDimensions();
+	for(int i=0;i<anotation->GetNumberOfPoints();i++){
 
-	for(int x = 0; x<imageSize[0]; x++){
+		double point[3];
+		anotation->GetPoint(i,point);
+		
+		double transformedPoint[3];
+		transform->TransformPoint(point,transformedPoint);
+
+		int voxel[3];
+        voxel[0] = vtkMath::Floor((transformedPoint[0])/spacing[0]);
+        voxel[1] = vtkMath::Floor((transformedPoint[1])/spacing[1]);
+        voxel[2] = vtkMath::Floor((transformedPoint[2])/spacing[2]);
+
+		unsigned char * volumeVoxel = static_cast<unsigned char *> (
+                            segmentedImage->GetScalarPointer(voxel[0],voxel[1],voxel[2]));
+
+		volumeVoxel[0] = 255;
+
+	}
+
+
+
+	/*for(int x = 0; x<imageSize[0]; x++){
             for(int y = 0; y<imageSize[1]; y++){
 
-				const float point[3] = {x,y,0};
+				const float point[3] = {spacingImage[0]*x,spacingImage[1]*y,0};
 				float transformedPoint[3];
 				transform->TransformPoint(point,transformedPoint);
 
 				int voxel[3];
-                voxel[0] = vtkMath::Floor(transformedPoint[0]);
-                voxel[1] = vtkMath::Floor(transformedPoint[1]);
-                voxel[2] = vtkMath::Floor(transformedPoint[2]);
+                voxel[0] = vtkMath::Floor((transformedPoint[0]));
+                voxel[1] = vtkMath::Floor((transformedPoint[1]));
+                voxel[2] = vtkMath::Floor((transformedPoint[2]));
 
 				unsigned char * imagePixel = static_cast<unsigned char *> (
                             stencilImage->GetScalarPointer(x,y,0));
@@ -215,7 +260,7 @@ void MainWindow::setSegmentedPath(vtkSmartPointer<vtkPolyData> anotation)
 					volumeVoxel[0] = 255;
 
 			}
-	}
+	}*/
 
 
 
@@ -250,8 +295,8 @@ void MainWindow::setSegmentedPath(vtkSmartPointer<vtkPolyData> anotation)
 	stencilToImageFilter->Update();*/
 
 	vtkSmartPointer<vtkMetaImageWriter> writer = vtkSmartPointer<vtkMetaImageWriter>::New();
-	writer->SetFileName("C:/Users/Fabian/Desktop/slice.mhd");
-	writer->SetRAWFileName("C:/Users/Fabian/Desktop/slice.raw");
+	writer->SetFileName("C:/Users/Fubu/Desktop/slice.mhd");
+	writer->SetRAWFileName("C:/Users/Fubu/Desktop/slice.raw");
 	writer->SetInput(segmentedImage);
 
 	try{
@@ -260,13 +305,7 @@ void MainWindow::setSegmentedPath(vtkSmartPointer<vtkPolyData> anotation)
 		std::cout<<e.what()<<std::endl;
 	}
 
-	vtkSmartPointer<vtkImageMathematics> max = vtkSmartPointer<vtkImageMathematics>::New();
-	max->SetOperationToMax();
-	max->SetInput1(stencilToImageFilter->GetOutput());
-	max->SetInput2(segmentedImage);
-	max->Update();
 
-	segmentedImage = max->GetOutput();
 }
 
 void MainWindow::displayVol()
@@ -357,14 +396,6 @@ void MainWindow::setRenderingData()
 	imageActorCoronal->InterpolateOff();
 	viewerCoronal->GetRenderWindow()->GetInteractor()->SetInteractorStyle(imageStyleCoronal);
 
-	//initializing segmented image
-	segmentedImage = vtkSmartPointer<vtkImageData>::New();
-	segmentedImage->SetExtent(volumeData->GetExtent());
-	segmentedImage->SetSpacing(volumeData->GetSpacing());
-	segmentedImage->SetOrigin(volumeData->GetOrigin());
-	segmentedImage->SetScalarTypeToUnsignedChar();
-	segmentedImage->SetNumberOfScalarComponents(1);
-	segmentedImage->AllocateScalars();
 	segmented = false;
 }
 
@@ -480,7 +511,7 @@ void MainWindow::configSagitalView()
 	sagitalCenterRefActor = vtkSmartPointer<vtkActor>::New();
  
 	sagitalCenterRef->SetNumberOfSides(50);
-	sagitalCenterRef->SetRadius(1);
+	sagitalCenterRef->SetRadius(0.5);
 	sagitalCenterRef->SetCenter(rotCenterSagital[0],rotCenterSagital[1],0);
 
 	sagitalCenterRefMapper->SetInputConnection(sagitalCenterRef->GetOutputPort());;
@@ -557,7 +588,7 @@ void MainWindow::configAxialView()
 	axialCenterRefActor = vtkSmartPointer<vtkActor>::New();
  
 	axialCenterRef->SetNumberOfSides(50);
-	axialCenterRef->SetRadius(1);
+	axialCenterRef->SetRadius(0.5);
 	axialCenterRef->SetCenter(rotCenterAxial[0],rotCenterAxial[1],0);
 
 	axialCenterRefMapper->SetInputConnection(axialCenterRef->GetOutputPort());;
@@ -630,7 +661,7 @@ void MainWindow::configCoronalView()
 	coronalCenterRefActor = vtkSmartPointer<vtkActor>::New();
  
 	coronalCenterRef->SetNumberOfSides(50);
-	coronalCenterRef->SetRadius(1);
+	coronalCenterRef->SetRadius(0.5);
 	coronalCenterRef->SetCenter(rotCenterCoronal[0],rotCenterCoronal[1],0);
 
 	coronalCenterRefMapper->SetInputConnection(coronalCenterRef->GetOutputPort());;
