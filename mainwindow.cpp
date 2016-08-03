@@ -217,95 +217,29 @@ void MainWindow::setSegmentedPath(vtkSmartPointer<vtkPolyData> anotation)
 	int *imageSize = stencilImage->GetDimensions();
 	double *spacingImage = stencilImage->GetSpacing();
 
-	for(int i=0;i<anotation->GetNumberOfPoints();i++){
-
-		double point[3];
-		anotation->GetPoint(i,point);
-		
-		double transformedPoint[3];
-		transform->TransformPoint(point,transformedPoint);
-
-		int voxel[3];
-        voxel[0] = vtkMath::Floor((transformedPoint[0])/spacing[0]);
-        voxel[1] = vtkMath::Floor((transformedPoint[1])/spacing[1]);
-        voxel[2] = vtkMath::Floor((transformedPoint[2])/spacing[2]);
-
-		unsigned char * volumeVoxel = static_cast<unsigned char *> (
-                            segmentedImage->GetScalarPointer(voxel[0],voxel[1],voxel[2]));
-
-		volumeVoxel[0] = 255;
-
-	}
-
-
-
-	/*for(int x = 0; x<imageSize[0]; x++){
+	for(int x = 0; x<imageSize[0]; x++){
             for(int y = 0; y<imageSize[1]; y++){
 
-				const float point[3] = {spacingImage[0]*x,spacingImage[1]*y,0};
-				float transformedPoint[3];
-				transform->TransformPoint(point,transformedPoint);
+				unsigned char * imagePixel = static_cast<unsigned char *> (stencilImage->GetScalarPointer(x,y,0));
 
-				int voxel[3];
-                voxel[0] = vtkMath::Floor((transformedPoint[0]));
-                voxel[1] = vtkMath::Floor((transformedPoint[1]));
-                voxel[2] = vtkMath::Floor((transformedPoint[2]));
+				if(imagePixel[0]==255){
+					
+					const float point[3] = {spacingImage[0]*x,spacingImage[1]*y,0};
+					float transformedPoint[3];
+					transform->TransformPoint(point,transformedPoint);
+					
+					int voxel[3];
+					voxel[0] = vtkMath::Floor((transformedPoint[0]/spacing[0]) + 0.5);
+					voxel[1] = vtkMath::Floor((transformedPoint[1]/spacing[1]) + 0.5);
+					voxel[2] = vtkMath::Floor((transformedPoint[2]/spacing[2]) + 0.5);
 
-				unsigned char * imagePixel = static_cast<unsigned char *> (
-                            stencilImage->GetScalarPointer(x,y,0));
-				unsigned char * volumeVoxel = static_cast<unsigned char *> (
-                            segmentedImage->GetScalarPointer(voxel[0],voxel[1],voxel[2]));
-
-				if(imagePixel[0]==255)
-					volumeVoxel[0] = 255;
-
+					if( (-1<voxel[0]&&voxel[0]<dimensions[0])&&(-1<voxel[1]&&voxel[1]<dimensions[1])&&(-1<voxel[2]&&voxel[2]<dimensions[2]) ){
+						unsigned char * volumeVoxel = static_cast<unsigned char *> (segmentedImage->GetScalarPointer(voxel[0],voxel[1],voxel[2]));
+						volumeVoxel[0] = 255;
+					}
+				}
 			}
-	}*/
-
-
-
-	/*vtkSmartPointer<vtkTransformPolyDataFilter> transformSegmentation = vtkSmartPointer<vtkTransformPolyDataFilter>::New();
-	transformSegmentation->SetInput(anotation);
-	
-	if(ui->sagitalViewBtn->isChecked()){
-		transformSegmentation->SetTransform(transformSagital);
-	}else if(ui->axialViewBtn->isChecked()){
-		transformSegmentation->SetTransform(transformAxial);
-	}else if(ui->coronalViewBtn->isChecked()){
-		transformSegmentation->SetTransform(transformCoronal);
 	}
-
-	transformSegmentation->Update();
-	segmentation = transformSegmentation->GetOutput();
-	
-	vtkSmartPointer<vtkPolyDataToImageStencil> dataToStencil = vtkSmartPointer<vtkPolyDataToImageStencil>::New();
-    dataToStencil->SetInput(segmentation);
-    dataToStencil->SetOutputSpacing(spacing);
-    dataToStencil->SetOutputOrigin(origin);
-	dataToStencil->SetOutputWholeExtent(volumeData->GetWholeExtent());
-    dataToStencil->Update();
-	
-	vtkSmartPointer<vtkImageStencilData> stencilImage = dataToStencil->GetOutput();
-
-	vtkSmartPointer<vtkImageStencilToImage> stencilToImageFilter = vtkSmartPointer<vtkImageStencilToImage>::New();
-	stencilToImageFilter->SetInput(dataToStencil->GetOutput());
-	stencilToImageFilter->SetOutsideValue(0);
-	stencilToImageFilter->SetInsideValue(255);
-	stencilToImageFilter->SetOutputScalarTypeToUnsignedChar();
-	stencilToImageFilter->Update();*/
-
-	vtkSmartPointer<vtkMetaImageWriter> writer = vtkSmartPointer<vtkMetaImageWriter>::New();
-	writer->SetFileName("C:/Users/Fubu/Desktop/slice.mhd");
-	writer->SetRAWFileName("C:/Users/Fubu/Desktop/slice.raw");
-	writer->SetInput(segmentedImage);
-
-	try{
-	writer->Write();
-	}catch(std::exception& e){
-		std::cout<<e.what()<<std::endl;
-	}
-
-
 }
 
 void MainWindow::displayVol()
