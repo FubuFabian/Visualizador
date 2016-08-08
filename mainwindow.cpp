@@ -168,20 +168,17 @@ void MainWindow::setSegmentedPath(vtkSmartPointer<vtkPolyData> anotation)
 		segmentedImage->SetNumberOfScalarComponents(1);
 		segmentedImage->AllocateScalars();
 
-		//unsigned char * segmentedImageVoxel;
+		unsigned char * segmentedImageVoxel;
 
-		//for(int i=0; i<dimensions[0]; i++){
-		//	for(int j=0; j<dimensions[1]; j++){
-		//		for(int k=0; k<dimensions[2]; k++){
-  //                  
-  //                  // get pointer to the current volume voxel   
-  //                  segmentedImageVoxel = static_cast<unsigned char *> (
-  //                          segmentedImage->GetScalarPointer(i,j,k));                   
-  //                  
-  //                  segmentedImageVoxel[0] = 0;                                    
-  //              }
-		//	}
-  //      }
+		for(int i=0; i<dimensions[0]; i++){
+			for(int j=0; j<dimensions[1]; j++){
+				for(int k=0; k<dimensions[2]; k++){
+                    // get pointer to the current volume voxel   
+                    segmentedImageVoxel = static_cast<unsigned char *> (segmentedImage->GetScalarPointer(i,j,k));                                     
+                    segmentedImageVoxel[0] = 0;                                    
+                }
+			}
+        }
   	}
 
 	vtkSmartPointer<vtkImageData> segmentedSlice;
@@ -224,7 +221,16 @@ void MainWindow::setSegmentedPath(vtkSmartPointer<vtkPolyData> anotation)
 
 				if(imagePixel[0]==255){
 					
-					const float point[3] = {spacingImage[0]*x,spacingImage[1]*y,0};
+					if(ui->sagitalViewBtn->isChecked()){	
+						const float point[3] = {0,spacingImage[0]*y,spacingImage[1]*x};
+					}else if(ui->axialViewBtn->isChecked()){
+						const float point[3] = {spacingImage[0]*x,spacingImage[1]*y,0};
+					}else if(ui->coronalViewBtn->isChecked()){
+						const float point[3] = {spacingImage[0]*x,0,spacingImage[1]*y,};
+					}else{
+						const float point[3] = {0,spacingImage[0]*y,spacingImage[1]*x};
+					}
+
 					float transformedPoint[3];
 					transform->TransformPoint(point,transformedPoint);
 					
@@ -240,6 +246,13 @@ void MainWindow::setSegmentedPath(vtkSmartPointer<vtkPolyData> anotation)
 				}
 			}
 	}
+
+	vtkSmartPointer<vtkMetaImageWriter> writer = vtkSmartPointer<vtkMetaImageWriter>::New();
+	writer->SetFileName("C:/Users/Fubu/Desktop/slice.mhd");
+	writer->SetRAWFileName("C:/Users/Fubu/Desktop/slice.raw");
+	writer->SetInput(segmentedImage);
+	writer->Write();
+	
 }
 
 void MainWindow::displayVol()
