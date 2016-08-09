@@ -221,15 +221,23 @@ void MainWindow::setSegmentedPath(vtkSmartPointer<vtkPolyData> anotation)
 
 				if(imagePixel[0]==255){
 					
+					float tempPoint[3];
+
 					if(ui->sagitalViewBtn->isChecked()){	
-						const float point[3] = {0,spacingImage[0]*y,spacingImage[1]*x};
+						tempPoint[0] = 0;
+						tempPoint[1] = spacingImage[1]*x;
+						tempPoint[2] = spacingImage[0]*y; 
 					}else if(ui->axialViewBtn->isChecked()){
-						const float point[3] = {spacingImage[0]*x,spacingImage[1]*y,0};
+						tempPoint[0] = spacingImage[0]*x;
+						tempPoint[1] = spacingImage[1]*y;
+						tempPoint[2] = 0;
 					}else if(ui->coronalViewBtn->isChecked()){
-						const float point[3] = {spacingImage[0]*x,0,spacingImage[1]*y,};
-					}else{
-						const float point[3] = {0,spacingImage[0]*y,spacingImage[1]*x};
+						tempPoint[0] = spacingImage[0]*x;
+						tempPoint[1] = 0;
+						tempPoint[2] = spacingImage[1]*y;
 					}
+
+					const float point[3] = {tempPoint[0],tempPoint[1],tempPoint[2]};
 
 					float transformedPoint[3];
 					transform->TransformPoint(point,transformedPoint);
@@ -248,8 +256,8 @@ void MainWindow::setSegmentedPath(vtkSmartPointer<vtkPolyData> anotation)
 	}
 
 	vtkSmartPointer<vtkMetaImageWriter> writer = vtkSmartPointer<vtkMetaImageWriter>::New();
-	writer->SetFileName("C:/Users/Fubu/Desktop/slice.mhd");
-	writer->SetRAWFileName("C:/Users/Fubu/Desktop/slice.raw");
+	writer->SetFileName("C:/Users/Fabian/Desktop/slice.mhd");
+	writer->SetRAWFileName("C:/Users/Fabian/Desktop/slice.raw");
 	writer->SetInput(segmentedImage);
 	writer->Write();
 	
