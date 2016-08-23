@@ -17,10 +17,14 @@
 #include <vtkPolyDataToImageStencil.h>
 #include <vtkImageStencilData.h>
 #include <vtkImageStencilToImage.h>
-#include <vtkImageMathematics.h>
-#include <vtkImageBlend.h>
+#include <vtkImageSobel2D.h>
 
 #include <vtkMetaImageWriter.h>
+
+#include <itkImage.h>
+#include <itkVTKImageToImageFilter.h>
+#include <itkImageToVTKImageFilter.h>
+#include <itkBinaryContourImageFilter.h>
 
 #include <vnl/vnl_matrix.h>
 #include <vnl/vnl_vector.h>
@@ -160,32 +164,17 @@ void MainWindow::setSegmentedPath(vtkSmartPointer<vtkPolyData> anotation)
 		ui->saveSegBtn->setEnabled(true);
 
 		//initializing segmented image
-		segmentedImage = vtkSmartPointer<vtkImageData>::New();
-		segmentedImage->SetExtent(volumeData->GetExtent());
-		segmentedImage->SetSpacing(volumeData->GetSpacing());
-		segmentedImage->SetOrigin(volumeData->GetOrigin());
-		segmentedImage->SetScalarTypeToUnsignedChar();
-		segmentedImage->SetNumberOfScalarComponents(1);
-		segmentedImage->AllocateScalars();
-
-		unsigned char * segmentedImageVoxel;
-
-		for(int i=0; i<dimensions[0]; i++){
-			for(int j=0; j<dimensions[1]; j++){
-				for(int k=0; k<dimensions[2]; k++){
-                    // get pointer to the current volume voxel   
-                    segmentedImageVoxel = static_cast<unsigned char *> (segmentedImage->GetScalarPointer(i,j,k));                                     
-                    segmentedImageVoxel[0] = 0;                                    
-                }
-			}
-        }
+		segmentedVolume = vtkSmartPointer<vtkImageData>::New();
+		segmentedVolume->DeepCopy(displayVolume);
   	}
 
+	//initializeing slice segmetation tools
 	vtkSmartPointer<vtkImageData> segmentedSlice;
 	vtkSmartPointer<vtkTransform> transform;
 	vtkSmartPointer<vtkPolyDataToImageStencil> dataToStencil = vtkSmartPointer<vtkPolyDataToImageStencil>::New();
 	vtkSmartPointer<vtkImageStencilToImage> stencilToImageFilter = vtkSmartPointer<vtkImageStencilToImage>::New();
 
+	//setting transformation from selected view
 	if(ui->sagitalViewBtn->isChecked()){	
 		segmentedSlice = reslicerSagital->GetOutput();
 		transform = transformSagital;
@@ -197,9 +186,10 @@ void MainWindow::setSegmentedPath(vtkSmartPointer<vtkPolyData> anotation)
 		transform = transformCoronal;
 	}
 
+	//segmenting slice
 	dataToStencil->SetInput(anotation);
 	dataToStencil->SetOutputSpacing(segmentedSlice->GetSpacing());
-	dataToStencil->SetOutputOrigin(volumeData->GetOrigin());
+	dataToStencil->SetOutputOrigin(displayVolume->GetOrigin());
 	dataToStencil->SetOutputWholeExtent(segmentedSlice->GetWholeExtent());
 	dataToStencil->Update();
 
@@ -209,15 +199,35 @@ void MainWindow::setSegmentedPath(vtkSmartPointer<vtkPolyData> anotation)
 	stencilToImageFilter->SetOutputScalarTypeToUnsignedChar();
 	stencilToImageFilter->Update();
 
-	vtkSmartPointer<vtkImageData> stencilImage = stencilToImageFilter->GetOutput();
+	//Segmentation contour extraction
+	typedef itk::Image<unsigned char,2> ImageType;
+	typedef itk::VTKImageToImageFilter<ImageType> ITKConverterType;
+    ITKConverterType::Pointer itkConverter = ITKConverterType::New();
 
-	int *imageSize = stencilImage->GetDimensions();
-	double *spacingImage = stencilImage->GetSpacing();
+	itkConverter->SetInput(stencilToImageFilter->GetOutput());
+	itkConverter->Update();
 
+	typedef itk::BinaryContourImageFilter<ImageType,ImageType> ContourFilterType;
+    ContourFilterType::Pointer contourFilter = ContourFilterType::New();
+
+	contourFilter->SetInput(itkConverter->GetOutput());
+	contourFilter->Update();
+
+	typedef itk::ImageToVTKImageFilter<ImageType> VTKConverterType;
+    VTKConverterType::Pointer vtkConverter = VTKConverterType::New();
+	vtkConverter->SetInput(contourFilter->GetOutput());
+    vtkConverter->Update();
+
+	vtkSmartPointer<vtkImageData> edgeImage = vtkConverter->GetOutput();
+
+	int *imageSize = edgeImage->GetDimensions();
+	double *spacingImage = edgeImage->GetSpacing();
+
+	//Filling segmentation volume
 	for(int x = 0; x<imageSize[0]; x++){
             for(int y = 0; y<imageSize[1]; y++){
 
-				unsigned char * imagePixel = static_cast<unsigned char *> (stencilImage->GetScalarPointer(x,y,0));
+				unsigned char * imagePixel = static_cast<unsigned char *> (edgeImage->GetScalarPointer(x,y,0));
 
 				if(imagePixel[0]==255){
 					
@@ -248,18 +258,18 @@ void MainWindow::setSegmentedPath(vtkSmartPointer<vtkPolyData> anotation)
 					voxel[2] = vtkMath::Floor((transformedPoint[2]/spacing[2]) + 0.5);
 
 					if( (-1<voxel[0]&&voxel[0]<dimensions[0])&&(-1<voxel[1]&&voxel[1]<dimensions[1])&&(-1<voxel[2]&&voxel[2]<dimensions[2]) ){
-						unsigned char * volumeVoxel = static_cast<unsigned char *> (segmentedImage->GetScalarPointer(voxel[0],voxel[1],voxel[2]));
+						unsigned char * volumeVoxel = static_cast<unsigned char *> (segmentedVolume->GetScalarPointer(voxel[0],voxel[1],voxel[2]));
 						volumeVoxel[0] = 255;
 					}
 				}
 			}
 	}
 
-	vtkSmartPointer<vtkMetaImageWriter> writer = vtkSmartPointer<vtkMetaImageWriter>::New();
+	/*vtkSmartPointer<vtkMetaImageWriter> writer = vtkSmartPointer<vtkMetaImageWriter>::New();
 	writer->SetFileName("C:/Users/Fabian/Desktop/slice.mhd");
 	writer->SetRAWFileName("C:/Users/Fabian/Desktop/slice.raw");
-	writer->SetInput(segmentedImage);
-	writer->Write();
+	writer->SetInput(segmentedVolume);
+	writer->Write();*/
 	
 }
 
@@ -289,7 +299,7 @@ void MainWindow::displayVol()
     vtkSmartPointer<vtkVolumeRayCastMapper> volumeMapper = vtkSmartPointer<vtkVolumeRayCastMapper>::New();
     volumeMapper->SetVolumeRayCastFunction(compositeFunction);
     volumeMapper->CroppingOff();
-    volumeMapper->SetInput(volumeData);
+    volumeMapper->SetInput(displayVolume);
 
 	//setting volume rendering data
     volume = vtkSmartPointer<vtkVolume>::New();
@@ -324,6 +334,11 @@ void MainWindow::displayVol()
 
 void MainWindow::setRenderingData()
 {
+
+	//Displayed volume
+	displayVolume = vtkSmartPointer<vtkImageData>::New();
+	displayVolume->DeepCopy(volumeData);
+
 	//initializing sagital 2D view
 	imageStyleSagital = vtkSmartPointer<vtkInteractorStyleImage>::New();
 	viewerSagital = vtkSmartPointer<vtkImageViewer2>::New();
@@ -359,9 +374,9 @@ void MainWindow::setSlicesData()
 	std::cout<<"Displaying Slices"<<std::endl;
 
 	//getting volume properties
-	volumeData->GetSpacing(spacing);
-	volumeData->GetOrigin(origin);
-    volumeData->GetDimensions(dimensions);
+	displayVolume->GetSpacing(spacing);
+	displayVolume->GetOrigin(origin);
+    displayVolume->GetDimensions(dimensions);
 
 	//setting center of volume 
 	centerSlice[0] = floor(dimensions[0]*0.5)-1;
@@ -423,7 +438,7 @@ void MainWindow::configSagitalView()
 
 	resliceAxesSagital->DeepCopy(sagitalElements);
 
-	reslicerSagital->SetInput(volumeData);
+	reslicerSagital->SetInput(displayVolume);
 	reslicerSagital->SetOutputDimensionality(2);
 	reslicerSagital->SetResliceAxes(resliceAxesSagital);
 	reslicerSagital->SetResliceTransform(transformSagital);
@@ -500,7 +515,7 @@ void MainWindow::configAxialView()
 
 	resliceAxesAxial->DeepCopy(axialElements);
 
-	reslicerAxial->SetInput(volumeData);
+	reslicerAxial->SetInput(displayVolume);
 	reslicerAxial->SetOutputDimensionality(2);
 	reslicerAxial->SetResliceAxes(resliceAxesAxial);
 	reslicerAxial->SetResliceTransform(transformAxial);
@@ -573,7 +588,7 @@ void MainWindow::configCoronalView()
 
 	resliceAxesCoronal->DeepCopy(coronalElements);
 
-	reslicerCoronal->SetInput(volumeData);
+	reslicerCoronal->SetInput(displayVolume);
 	reslicerCoronal->SetOutputDimensionality(2);
 	reslicerCoronal->SetResliceAxes(resliceAxesCoronal);
 	reslicerCoronal->SetResliceTransform(transformCoronal);
@@ -789,8 +804,8 @@ void MainWindow::openMHD()
     volumeData = reader->GetOutput();
 
 	//displaying volume
-	displayVol();
 	setRenderingData();
+	displayVol();
 	setSlicesData();
 }
 
@@ -806,6 +821,7 @@ void MainWindow::openVol()
     reader->SetFilename(volumeFilename);
 	reader->Update();
 
+	//filp image for visualizatioln
 	vtkSmartPointer<vtkImageFlip> volFlipY = vtkSmartPointer<vtkImageFlip>::New();
 	volFlipY->SetInput(reader->GetOutput());
 	volFlipY->SetFilteredAxis(1);
@@ -814,8 +830,8 @@ void MainWindow::openVol()
 	volumeData = volFlipY->GetOutput();
 
 	//displaying volume
-	displayVol();
 	setRenderingData();
+	displayVol();
 	setSlicesData();
 }
 
@@ -1611,12 +1627,6 @@ void MainWindow::saveSeg()
 	segmented = true;
 	ui->saveSegBtn->setEnabled(true);
 
-	vtkSmartPointer<vtkImageBlend> blend = vtkSmartPointer<vtkImageBlend>::New();
-	blend->SetInput(0,volumeData);
-	blend->SetInput(1,segmentedImage);
-	blend->SetOpacity(1,0.5);
-	blend->Update();
-
 	QString saveDirectory = QFileDialog::getSaveFileName(
                 this, tr("Choose File to Save Mask Volume"), QDir::currentPath());
 
@@ -1642,11 +1652,23 @@ void MainWindow::saveSeg()
 	vtkSmartPointer<vtkMetaImageWriter> writer = vtkSmartPointer<vtkMetaImageWriter>::New();
 	writer->SetFileName(saveMhdFile);
 	writer->SetRAWFileName(saveRawFile);
-	writer->SetInput(blend->GetOutput());
+	writer->SetInput(segmentedVolume);
 
 	try{
 	writer->Write();
 	}catch(std::exception& e){
 		std::cout<<e.what()<<std::endl;
+	}
+}
+
+void MainWindow::showSeg(bool value)
+{
+
+	if(value){
+		displayVolume = segmentedVolume;
+		displayVolume->Update();
+		displaySagital();
+		displayCoronal;
+		display
 	}
 }

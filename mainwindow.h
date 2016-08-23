@@ -86,9 +86,14 @@ private:
     vtkSmartPointer<vtkVolume> volume;
 
 	/** 
-	The displayed volume data
+	The volume data
 	**/
     vtkSmartPointer<vtkImageData> volumeData;
+
+	/**
+	The displayed volume
+	**/
+	vtkSmartPointer<vtkImageData> displayVolume;
 
 	/** 
 	The displayed volume opacity
@@ -483,7 +488,7 @@ private:
 	/**
 	Segmented image
 	**/
-	vtkSmartPointer<vtkImageData> segmentedImage;
+	vtkSmartPointer<vtkImageData> segmentedVolume;
 
 	/**
 	Segmentation Flag
@@ -651,6 +656,13 @@ private slots:
 	Save manual segmentation 
 	**/
 	void saveSeg();
+
+	/**
+	Show Segmented Volume
+	**/
+	void showSeg(bool);
+
+	
 };
 
 #endif // MAINWINDOW_H
